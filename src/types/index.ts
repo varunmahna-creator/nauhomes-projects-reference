@@ -37,6 +37,7 @@ export interface Project {
 export interface NavLink {
   label: string;
   href: string;
+  dropdown?: { label: string; href: string; }[];
 }
 
 export interface Stat {

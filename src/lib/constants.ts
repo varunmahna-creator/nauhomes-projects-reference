@@ -10,7 +10,15 @@ import type {
 
 export const NAV_LINKS: NavLink[] = [
   { label: "Home", href: "/" },
-  { label: "Projects", href: "/projects" },
+  { 
+    label: "Projects", 
+    href: "/projects",
+    dropdown: [
+      { label: "All Projects", href: "/projects" },
+      { label: "Delhi NCR", href: "/delhi" },
+      { label: "Bali, Indonesia", href: "/bali" },
+    ]
+  },
   { label: "Services", href: "/services" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },

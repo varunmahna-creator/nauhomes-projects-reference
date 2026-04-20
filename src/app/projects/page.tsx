@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 
 export default function ProjectsPage() {
   const projects = getProjects();
-  return <ProjectsPageClient projects={projects} />;
+  return <ProjectsPageClient projects={projects} showFilters={true} />;
 }

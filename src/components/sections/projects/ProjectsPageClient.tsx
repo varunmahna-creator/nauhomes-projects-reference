@@ -15,43 +15,60 @@ const LOCATION_TABS = ["All", "Delhi", "Bali"];
 
 interface ProjectsPageClientProps {
   projects: Project[];
+  locationFilter?: ProjectLocation | "all";
+  title?: string;
+  showFilters?: boolean;
 }
 
-export default function ProjectsPageClient({ projects }: ProjectsPageClientProps) {
+export default function ProjectsPageClient({ 
+  projects, 
+  locationFilter: fixedLocationFilter,
+  title,
+  showFilters = true 
+}: ProjectsPageClientProps) {
   const [statusFilter, setStatusFilter] = useState("All");
   const [locationFilter, setLocationFilter] = useState("All");
 
   const filtered = useMemo(() => {
     return projects.filter((p) => {
       const matchStatus = statusFilter === "All" || p.status === statusFilter.toLowerCase();
-      const matchLocation = locationFilter === "All" || p.location === locationFilter.toLowerCase();
+      // Use fixed location filter if provided, otherwise use state
+      const currentLocationFilter = fixedLocationFilter || locationFilter;
+      const matchLocation = currentLocationFilter === "all" || currentLocationFilter === "All" || 
+                           p.location === (typeof currentLocationFilter === 'string' ? currentLocationFilter.toLowerCase() : currentLocationFilter);
       return matchStatus && matchLocation;
     });
-  }, [statusFilter, locationFilter, projects]);
+  }, [statusFilter, locationFilter, fixedLocationFilter, projects]);
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative flex items-center justify-center bg-gradient-to-br from-navy-dark via-navy to-navy-light pt-32 pb-20">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-20 h-64 w-64 rounded-full bg-gold/30 blur-3xl" />
-        </div>
-        <div className="relative z-10 text-center px-4">
-          <h1 className="text-4xl font-bold text-white sm:text-5xl lg:text-6xl" style={{ fontFamily: "var(--font-heading)" }}>
-            Our <span className="text-gold">Projects</span>
-          </h1>
-          <p className="mt-4 text-lg text-white/60 max-w-2xl mx-auto">
-            Explore our portfolio of luxury residences across Delhi NCR and Bali
-          </p>
-        </div>
-      </section>
+      {/* Hero - Only show if no custom title provided */}
+      {!title && (
+        <section className="relative flex items-center justify-center bg-gradient-to-br from-navy-dark via-navy to-navy-light pt-32 pb-20">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 right-20 h-64 w-64 rounded-full bg-gold/30 blur-3xl" />
+          </div>
+          <div className="relative z-10 text-center px-4">
+            <h1 className="text-4xl font-bold text-white sm:text-5xl lg:text-6xl" style={{ fontFamily: "var(--font-heading)" }}>
+              Our <span className="text-gold">Projects</span>
+            </h1>
+            <p className="mt-4 text-lg text-white/60 max-w-2xl mx-auto">
+              Explore our portfolio of luxury residences across Delhi NCR and Bali
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Filters + Grid */}
       <SectionWrapper className="bg-white">
-        <div className="space-y-4 mb-10">
-          <FilterTabs tabs={STATUS_TABS} activeTab={statusFilter} onTabChange={setStatusFilter} />
-          <FilterTabs tabs={LOCATION_TABS} activeTab={locationFilter} onTabChange={setLocationFilter} />
-        </div>
+        {showFilters && (
+          <div className="space-y-4 mb-10">
+            <FilterTabs tabs={STATUS_TABS} activeTab={statusFilter} onTabChange={setStatusFilter} />
+            {!fixedLocationFilter && (
+              <FilterTabs tabs={LOCATION_TABS} activeTab={locationFilter} onTabChange={setLocationFilter} />
+            )}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="text-center py-20">
