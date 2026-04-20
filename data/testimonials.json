@@ -1,0 +1,50 @@
+[
+  {
+    "id": "rajesh-sharma",
+    "name": "Rajesh Sharma",
+    "location": "GK-1, Delhi",
+    "quote": "Nirvana Group transformed our 40-year-old property into a stunning modern villa. Their attention to detail and quality of materials exceeded our expectations. The team was professional throughout the 18-month journey.",
+    "rating": 5,
+    "profession": "Business Owner"
+  },
+  {
+    "id": "priya-ankit-malhotra",
+    "name": "Priya & Ankit Malhotra",
+    "location": "Saket, Delhi",
+    "quote": "We were impressed by how they managed every aspect of our home construction. From design to delivery, the process was seamless. Our neighbors constantly compliment the front elevation.",
+    "rating": 5,
+    "profession": "IT Professionals"
+  },
+  {
+    "id": "david-morrison",
+    "name": "David Morrison",
+    "location": "Seminyak, Bali",
+    "quote": "Building a pool villa in Bali seemed daunting until we found Nirvana Group. Their understanding of both Indian and Balinese architecture is remarkable. Our vacation home is a tropical paradise.",
+    "rating": 5,
+    "profession": "Expatriate"
+  },
+  {
+    "id": "sunita-kapoor",
+    "name": "Sunita Kapoor",
+    "location": "Defence Colony, Delhi",
+    "quote": "The redevelopment of our family home was handled with care and expertise. They respected the heritage while adding modern luxury. Truly a five-star experience.",
+    "rating": 5,
+    "profession": "Architect"
+  },
+  {
+    "id": "michael-sarah-chen",
+    "name": "Michael & Sarah Chen",
+    "location": "Ubud, Bali",
+    "quote": "Our Bali retreat exceeded every expectation. The integration of indoor-outdoor living spaces is brilliant. The team managed everything remotely with regular updates and transparency.",
+    "rating": 4,
+    "profession": "Entrepreneurs"
+  },
+  {
+    "id": "vikram-singh",
+    "name": "Dr. Vikram Singh",
+    "location": "Vasant Vihar, Delhi",
+    "quote": "As a surgeon, I appreciate precision and Nirvana Group delivered exactly that. Every corner of our new home reflects quality craftsmanship. Highly recommended for luxury construction.",
+    "rating": 5,
+    "profession": "Medical Professional"
+  }
+]

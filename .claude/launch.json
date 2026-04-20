@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nauhomes-dev",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "PATH=/usr/local/bin:$PATH npx next dev --port 3006"],
+      "port": 3006,
+      "cwd": "/tmp/nauhomes"
+    }
+  ]
+}

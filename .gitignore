@@ -36,6 +36,15 @@ yarn-error.log*
 # vercel
 .vercel
 
+# uploaded images (added per project via admin)
+/public/images/projects/
+/public/images/testimonials/
+/public/images/media/
+/public/images/homepage/
+
+# leads data (contains PII)
+/data/leads.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
