@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Test - Nirvana Homes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nirvana Homes - Upload Test</h1>
+    <p>This page tests the upload functionality of the admin panel.</p>
+
+    <div class="test-section">
+        <h2>1. Image Upload Test</h2>
+        <input type="file" id="imageFile" accept="image/*">
+        <button onclick="testImageUpload()">Test Image Upload</button>
+        <div id="imageResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. PDF Upload Test</h2>
+        <input type="file" id="pdfFile" accept="application/pdf">
+        <button onclick="testPDFUpload()">Test PDF Upload</button>
+        <div id="pdfResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Project Creation Test</h2>
+        <button onclick="testProjectCreation()">Test Project Creation</button>
+        <div id="projectResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testImageUpload() {
+            const fileInput = document.getElementById('imageFile');
+            const resultDiv = document.getElementById('imageResult');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select an image file first</div>';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('type', 'thumbnail');
+            formData.append('slug', 'test-project');
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Upload successful!<br>
+                            Path: ${data.path}<br>
+                            Filename: ${data.filename}<br>
+                            Size: ${data.size} bytes
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Upload failed: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function testPDFUpload() {
+            const fileInput = document.getElementById('pdfFile');
+            const resultDiv = document.getElementById('pdfResult');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select a PDF file first</div>';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('type', 'floorplan');
+            formData.append('slug', 'test-project');
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ PDF upload successful!<br>
+                            Path: ${data.path}<br>
+                            Filename: ${data.filename}<br>
+                            Type: ${data.type}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ PDF upload failed: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function testProjectCreation() {
+            const resultDiv = document.getElementById('projectResult');
+            
+            const testProject = {
+                title: 'Test Luxury Villa ' + Date.now(),
+                subtitle: 'Upload Test Project',
+                location: 'delhi',
+                locationLabel: 'Test Location',
+                status: 'ongoing',
+                type: 'Luxury Villa',
+                area: '4000 sq ft',
+                year: '2025',
+                description: 'This is a test project created to verify the upload and save functionality.',
+                highlights: ['Upload Test', 'Functional Admin Panel', 'Working Storage'],
+                amenities: ['Test Feature 1', 'Test Feature 2'],
+                specs: { 'Bedrooms': '4', 'Bathrooms': '3', 'Status': 'Test' }
+            };
+
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testProject)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Project creation successful!<br>
+                            Project: ${data.title}<br>
+                            Slug: ${data.slug}<br>
+                            Location: ${data.locationLabel}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Project creation failed: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-test all endpoints on page load
+        window.onload = function() {
+            console.log('Upload test page loaded');
+            console.log('Available tests:');
+            console.log('1. Image Upload Test');
+            console.log('2. PDF Upload Test'); 
+            console.log('3. Project Creation Test');
+        }
+    </script>
+</body>
+</html>
