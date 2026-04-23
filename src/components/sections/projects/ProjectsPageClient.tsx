@@ -11,7 +11,7 @@ import Badge from "@/components/ui/Badge";
 import type { Project, ProjectStatus, ProjectLocation } from "@/types";
 
 const STATUS_TABS = ["All", "Completed", "Ongoing"];
-const LOCATION_TABS = ["All", "Delhi", "Bali"];
+const LOCATION_TABS = ["All", "Delhi NCR", "Bali"];
 
 interface ProjectsPageClientProps {
   projects: Project[];
@@ -98,7 +98,7 @@ export default function ProjectsPageClient({
                       </div>
                       <div className="absolute top-4 left-4 z-10">
                         <Badge variant="outline" className="bg-white/10 text-white border-white/20">
-                          {project.location === "delhi" ? "Delhi" : "Bali"}
+                          {project.location === "delhi" ? "Delhi NCR" : "Bali"}
                         </Badge>
                       </div>
                       <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6">

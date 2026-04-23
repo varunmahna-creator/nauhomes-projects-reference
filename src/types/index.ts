@@ -1,5 +1,6 @@
 export type ProjectStatus = "completed" | "ongoing";
 export type ProjectLocation = "delhi" | "bali";
+export type SpecificLocation = "Delhi" | "Noida" | "Gurgaon" | "Ghaziabad" | "Faridabad" | "Bali";
 
 export interface ProjectImage {
   src: string;
