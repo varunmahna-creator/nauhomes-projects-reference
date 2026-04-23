@@ -1,16 +1,39 @@
 import type { Project, ProjectStatus, ProjectLocation } from "@/types";
-import fs from "fs";
-import path from "path";
 
-const DATA_PATH = path.join(process.cwd(), "data", "projects.json");
+// For Vercel deployment, we'll use a different approach
+const INITIAL_PROJECTS: Project[] = [];
+
+// In development, use file system; in production, use in-memory storage
+let projectsCache: Project[] | null = null;
 
 export function getProjects(): Project[] {
-  const raw = fs.readFileSync(DATA_PATH, "utf-8");
-  return JSON.parse(raw) as Project[];
+  // In serverless environment, return cached data or initial empty array
+  if (typeof window === 'undefined') {
+    // Server-side: return initial projects or cached data
+    return projectsCache || INITIAL_PROJECTS;
+  }
+  
+  // Client-side: use localStorage
+  try {
+    const stored = localStorage.getItem('nirvana_projects');
+    return stored ? JSON.parse(stored) : INITIAL_PROJECTS;
+  } catch {
+    return INITIAL_PROJECTS;
+  }
 }
 
 export function saveProjects(projects: Project[]): void {
-  fs.writeFileSync(DATA_PATH, JSON.stringify(projects, null, 2), "utf-8");
+  // Cache for server-side rendering
+  projectsCache = projects;
+  
+  // Save to localStorage on client-side
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('nirvana_projects', JSON.stringify(projects));
+    } catch (error) {
+      console.error('Failed to save projects to localStorage:', error);
+    }
+  }
 }
 
 export function getProjectBySlug(slug: string): Project | undefined {

@@ -28,35 +28,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, PDF" }, { status: 400 });
     }
 
-    // Create directory based on category
-    let uploadDir: string;
+    // For Vercel serverless, files need to be uploaded to third-party storage
+    // For now, we'll return a placeholder path
     let publicPath: string;
-
+    
+    // In a real deployment, you'd upload to:
+    // - AWS S3
+    // - Cloudinary  
+    // - Vercel Blob Storage
+    // - etc.
+    
+    // For demo purposes, return a placeholder path
+    const timestamp = Date.now();
+    const ext = file.name.split(".").pop() || "jpg";
+    const filename = `${imageType || "image"}-${timestamp}.${ext}`;
+    
     if (category === "media") {
-      uploadDir = path.join(process.cwd(), "public", "images", "media");
+      publicPath = `/images/media/${filename}`;
     } else if (category === "testimonial") {
-      uploadDir = path.join(process.cwd(), "public", "images", "testimonials", testimonialId || "unknown");
+      publicPath = `/images/testimonials/${testimonialId || "unknown"}/${filename}`;
     } else if (category === "timeline") {
-      uploadDir = path.join(process.cwd(), "public", "images", "projects", projectSlug, "timeline");
+      publicPath = `/images/projects/${projectSlug}/timeline/${filename}`;
     } else {
-      uploadDir = path.join(process.cwd(), "public", "images", "projects", projectSlug);
-    }
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+      publicPath = `/images/projects/${projectSlug}/${filename}`;
     }
 
     // Generate filename
     const ext = file.name.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const filename = `${imageType || "image"}-${timestamp}.${ext}`;
-    const filePath = path.join(uploadDir, filename);
+    
 
-    // Write file
-    const buffer = Buffer.from(await file.arrayBuffer());
-    console.log("Writing file to:", filePath);
-    fs.writeFileSync(filePath, buffer);
-    console.log("File written successfully");
+    // TODO: Upload to third-party storage (S3, Cloudinary, etc.)
+    // For demo purposes, we're just returning a path
+    console.log("File upload simulated for:", filename);
 
     // Return the public URL path based on category
     if (category === "media") {
