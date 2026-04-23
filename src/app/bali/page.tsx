@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import ProjectsPageClient from "@/components/sections/projects/ProjectsPageClient";
-import { filterProjects } from "@/lib/projects";
+import { filterProjects } from "@/lib/projects-db";
 
 export const metadata: Metadata = {
   title: "Bali Projects - Sustainable Luxury Villas | Nirvana Homes",
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BaliProjectsPage() {
-  const baliProjects = filterProjects("all", "bali");
+export default async function BaliProjectsPage() {
+  const baliProjects = await filterProjects("all", "bali");
   
   return (
     <div className="min-h-screen">
@@ -53,7 +53,7 @@ export default function BaliProjectsPage() {
               </p>
             </div>
             <div className="text-center">
-              <h3 className="text-2xl font-semibold text-slate-800 mb-4">Tropical Luxury</h3>
+              <h3 className="text-2xl font-semibent text-slate-800 mb-4">Tropical Luxury</h3>
               <p className="text-slate-600">
                 Premium villas designed to embrace Bali's natural beauty with modern luxury amenities.
               </p>

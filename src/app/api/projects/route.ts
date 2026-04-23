@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { getProjects, saveProjects } from "@/lib/projects";
+import { getProjects, createProject } from "@/lib/projects-db";
 import type { Project } from "@/types";
 
 export async function GET() {
-  const projects = getProjects();
-  return NextResponse.json(projects);
+  try {
+    const projects = await getProjects();
+    return NextResponse.json(projects);
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -19,9 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    const projects = getProjects();
-    console.log("Current projects count:", projects.length);
-
     // Generate slug from title
     const slug = body.title
       .toLowerCase()
@@ -31,12 +33,13 @@ export async function POST(request: Request) {
     console.log("Generated slug:", slug);
 
     // Check for duplicate slug
-    if (projects.find((p: Project) => p.slug === slug)) {
+    const existingProjects = await getProjects();
+    if (existingProjects.find((p: Project) => p.slug === slug)) {
       console.log("Duplicate slug found:", slug);
       return NextResponse.json({ error: "A project with this name already exists" }, { status: 400 });
     }
 
-    const newProject: Project = {
+    const newProject: Omit<Project, 'id'> = {
       slug,
       title: body.title || "",
       subtitle: body.subtitle || "",
@@ -57,12 +60,17 @@ export async function POST(request: Request) {
       timeline: body.timeline || [],
     };
 
-    console.log("Saving project:", newProject);
-    projects.push(newProject);
-    saveProjects(projects);
-    console.log("Project saved successfully");
+    console.log("Creating project in database:", newProject);
+    const createdProject = await createProject(newProject);
 
-    return NextResponse.json(newProject, { status: 201 });
+    if (!createdProject) {
+      console.error("Failed to create project in database");
+      return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
+    }
+
+    console.log("Project created successfully:", createdProject);
+    return NextResponse.json(createdProject, { status: 201 });
+    
   } catch (error) {
     console.error("Project creation error:", error);
     return NextResponse.json({ 

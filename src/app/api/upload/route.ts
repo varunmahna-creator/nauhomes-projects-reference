@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export async function POST(request: Request) {
   try {
@@ -23,62 +22,63 @@ export async function POST(request: Request) {
     });
 
     // Validate file type
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/quicktime", "video/webm", "application/pdf"];
+    const validTypes = [
+      "image/jpeg", 
+      "image/png", 
+      "image/webp", 
+      "image/avif", 
+      "video/mp4", 
+      "video/quicktime", 
+      "video/webm", 
+      "application/pdf"
+    ];
+    
     if (!validTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, PDF" }, { status: 400 });
+      return NextResponse.json({ 
+        error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, MP4, MOV, WebM, PDF" 
+      }, { status: 400 });
     }
 
-    // For Vercel serverless, files need to be uploaded to third-party storage
-    // For now, we'll return a placeholder path
-    let publicPath: string;
-    
-    // In a real deployment, you'd upload to:
-    // - AWS S3
-    // - Cloudinary  
-    // - Vercel Blob Storage
-    // - etc.
-    
-    // For demo purposes, return a placeholder path
-    const timestamp = Date.now();
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `${imageType || "image"}-${timestamp}.${ext}`;
+    // Determine Cloudinary folder structure
+    let folder = "nauhomes";
     
     if (category === "media") {
-      publicPath = `/images/media/${filename}`;
+      folder = "nauhomes/media";
     } else if (category === "testimonial") {
-      publicPath = `/images/testimonials/${testimonialId || "unknown"}/${filename}`;
+      folder = `nauhomes/testimonials/${testimonialId || "unknown"}`;
     } else if (category === "timeline") {
-      publicPath = `/images/projects/${projectSlug}/timeline/${filename}`;
+      folder = `nauhomes/projects/${projectSlug}/timeline`;
     } else {
-      publicPath = `/images/projects/${projectSlug}/${filename}`;
+      folder = `nauhomes/projects/${projectSlug}/${imageType || "gallery"}`;
     }
 
-    // Generate filename
-    const ext = file.name.split(".").pop() || "jpg";
-    const timestamp = Date.now();
-    const filename = `${imageType || "image"}-${timestamp}.${ext}`;
-    
+    // Upload to Cloudinary
+    try {
+      const result = await uploadToCloudinary(file, folder);
+      
+      console.log("File uploaded successfully to Cloudinary:", {
+        url: result.url,
+        public_id: result.public_id
+      });
 
-    // TODO: Upload to third-party storage (S3, Cloudinary, etc.)
-    // For demo purposes, we're just returning a path
-    console.log("File upload simulated for:", filename);
-
-    // Return the public URL path based on category
-    if (category === "media") {
-      publicPath = `/images/media/${filename}`;
-    } else if (category === "testimonial") {
-      publicPath = `/images/testimonials/${testimonialId || "unknown"}/${filename}`;
-    } else if (category === "timeline") {
-      publicPath = `/images/projects/${projectSlug}/timeline/${filename}`;
-    } else {
-      publicPath = `/images/projects/${projectSlug}/${filename}`;
+      return NextResponse.json({ 
+        path: result.url,
+        public_id: result.public_id,
+        filename: file.name 
+      });
+      
+    } catch (cloudinaryError) {
+      console.error("Cloudinary upload error:", cloudinaryError);
+      return NextResponse.json({ 
+        error: "Failed to upload file to cloud storage",
+        details: cloudinaryError instanceof Error ? cloudinaryError.message : "Unknown upload error"
+      }, { status: 500 });
     }
 
-    return NextResponse.json({ path: publicPath, filename });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json({ 
-      error: "Failed to upload file", 
+      error: "Failed to process upload request", 
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 });
   }

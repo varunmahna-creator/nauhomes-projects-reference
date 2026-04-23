@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import ProjectsPageClient from "@/components/sections/projects/ProjectsPageClient";
-import { filterProjects } from "@/lib/projects";
+import { filterProjects } from "@/lib/projects-db";
 
 export const metadata: Metadata = {
   title: "Delhi Projects - Luxury Homes & Builder Floors | Nirvana Homes",
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DelhiProjectsPage() {
-  const delhiProjects = filterProjects("all", "delhi");
+export default async function DelhiProjectsPage() {
+  const delhiProjects = await filterProjects("all", "delhi");
   
   return (
     <div className="min-h-screen">
@@ -53,7 +53,7 @@ export default function DelhiProjectsPage() {
               </p>
             </div>
             <div className="text-center">
-              <h3 className="text-2xl font-semibold text-slate-800 mb-4">Luxury Design</h3>
+              <h3 className="text-2xl font-semibent text-slate-800 mb-4">Luxury Design</h3>
               <p className="text-slate-600">
                 Contemporary architecture with premium finishes and modern amenities for discerning clients.
               </p>

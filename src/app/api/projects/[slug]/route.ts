@@ -1,55 +1,70 @@
 import { NextResponse } from "next/server";
-import { getProjects, saveProjects, getProjectBySlug } from "@/lib/projects";
+import { getProjectBySlug, updateProject, deleteProject } from "@/lib/projects-db";
+import type { Project } from "@/types";
 
-type Props = {
-  params: Promise<{ slug: string }>;
-};
-
-export async function GET(request: Request, { params }: Props) {
-  const { slug } = await params;
-  const project = getProjectBySlug(slug);
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+export async function GET(
+  request: Request,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const project = await getProjectBySlug(params.slug);
+    
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    
+    return NextResponse.json(project);
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return NextResponse.json({ error: "Failed to fetch project" }, { status: 500 });
   }
-  return NextResponse.json(project);
 }
 
-export async function PUT(request: Request, { params }: Props) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { slug: string } }
+) {
   try {
-    const { slug } = await params;
     const body = await request.json();
-    const projects = getProjects();
-    const index = projects.findIndex((p) => p.slug === slug);
-
-    if (index === -1) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    console.log("Updating project:", params.slug, body);
+    
+    const updatedProject = await updateProject(params.slug, body);
+    
+    if (!updatedProject) {
+      return NextResponse.json({ error: "Failed to update project" }, { status: 500 });
     }
-
-    // Merge updates into existing project
-    projects[index] = { ...projects[index], ...body, slug }; // slug cannot change
-    saveProjects(projects);
-
-    return NextResponse.json(projects[index]);
+    
+    console.log("Project updated successfully:", updatedProject);
+    return NextResponse.json(updatedProject);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update project" }, { status: 500 });
+    console.error("Project update error:", error);
+    return NextResponse.json({ 
+      error: "Failed to update project", 
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, { params }: Props) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { slug: string } }
+) {
   try {
-    const { slug } = await params;
-    const projects = getProjects();
-    const index = projects.findIndex((p) => p.slug === slug);
-
-    if (index === -1) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    console.log("Deleting project:", params.slug);
+    
+    const success = await deleteProject(params.slug);
+    
+    if (!success) {
+      return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
     }
-
-    projects.splice(index, 1);
-    saveProjects(projects);
-
-    return NextResponse.json({ success: true });
+    
+    console.log("Project deleted successfully:", params.slug);
+    return NextResponse.json({ message: "Project deleted successfully" });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
+    console.error("Project deletion error:", error);
+    return NextResponse.json({ 
+      error: "Failed to delete project", 
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 });
   }
 }

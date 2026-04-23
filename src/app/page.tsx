@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import HomePageClient from "./HomePageClient";
-import { getProjects } from "@/lib/projects";
+import { getProjects } from "@/lib/projects-db";
 import { getTestimonials } from "@/lib/testimonials";
 import { getMedia } from "@/lib/media";
 import { getSettings } from "@/lib/settings";
@@ -28,96 +28,53 @@ export const metadata: Metadata = {
     description: "Premier luxury construction company specializing in premium residential projects across Delhi NCR and Bali. 20+ years of excellence in crafting luxury living spaces.",
     images: [
       {
-        url: "/og-home.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Nirvana Group luxury construction projects in Delhi and Bali",
-      },
+        url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+        width: 1920,
+        height: 1080,
+        alt: "Luxury residential construction"
+      }
     ],
+    url: "https://nauhomes.com",
+    siteName: "Nirvana Group",
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Luxury Construction in Delhi & Bali | Nirvana Group", 
+    description: "Premier luxury construction company specializing in premium residential projects across Delhi NCR and Bali.",
+    images: ["https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"]
   },
   alternates: {
-    canonical: "https://www.nauhomes.com",
+    canonical: "https://nauhomes.com"
   },
-};
-
-// Enhanced JSON-LD for Homepage
-const homepageSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "name": "Luxury Construction in Delhi & Bali | Nirvana Group",
-  "description": "Premier luxury construction company specializing in premium residential projects across Delhi NCR and Bali.",
-  "url": "https://www.nauhomes.com",
-  "mainEntity": {
-    "@type": "Organization",
-    "name": "Nirvana Group",
-    "description": "Luxury construction company with 20+ years of experience in Delhi NCR and Bali",
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Construction Services",
-      "itemListElement": [
-        {
-          "@type": "Offer",
-          "itemOffered": {
-            "@type": "Service",
-            "name": "Luxury Builder Floors",
-            "description": "Premium builder floors in South Delhi's elite colonies"
-          }
-        },
-        {
-          "@type": "Offer",
-          "itemOffered": {
-            "@type": "Service", 
-            "name": "Luxury Villas Bali",
-            "description": "Sustainable luxury villas in Bali, Indonesia"
-          }
-        },
-        {
-          "@type": "Offer",
-          "itemOffered": {
-            "@type": "Service",
-            "name": "Redevelopment Projects",
-            "description": "Complete redevelopment solutions in Delhi NCR"
-          }
-        }
-      ]
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1
     }
   },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://www.nauhomes.com"
-      }
-    ]
+  verification: {
+    google: "your-google-verification-code"
   }
 };
 
-export default function HomePage() {
-  const projects = getProjects();
+export default async function Page() {
+  const projects = await getProjects();
   const testimonials = getTestimonials();
   const media = getMedia();
   const settings = getSettings();
 
   return (
-    <>
-      {/* Homepage Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(homepageSchema),
-        }}
-      />
-      
-      <HomePageClient
-        projects={projects}
-        testimonials={testimonials}
-        media={media}
-        sectionVisibility={settings.sectionVisibility}
-        homepageImages={settings.homepageImages}
-      />
-    </>
+    <HomePageClient 
+      projects={projects}
+      testimonials={testimonials}
+      media={media}
+      settings={settings}
+    />
   );
-}console.log('FORCE DEPLOY: Thu Apr 23 07:48:49 UTC 2026');
+}
