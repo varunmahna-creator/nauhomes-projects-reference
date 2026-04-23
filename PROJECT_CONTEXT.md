@@ -1,6 +1,6 @@
 # Nirvana Homes (nauhomes) - Project Context
 
-**Last updated:** 2026-04-23 by Dhurandhar (with Varun)
+**Last updated:** 2026-04-23 by Dhurandhar (with Varun) — admin auth added
 **Status:** Working — admin panel + public site fully functional
 
 ---
@@ -99,6 +99,7 @@ Auto-populated by the Vercel Storage integrations (do NOT edit manually):
 
 - `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING` — from Neon integration
 - `BLOB_READ_WRITE_TOKEN` — from Blob integration
+- `ADMIN_PASSWORD` — password for `/admin` access (set manually, Production + Preview envs)
 
 `.env.local` on the VM is intentionally empty-ish (comment-only). Pull real values via `vercel env pull .env.local` if needed for local dev.
 
@@ -123,6 +124,7 @@ No manual Vercel deploys needed. Ever.
 - ✅ Image + PDF upload via Vercel Blob — real URLs, public access
 - ✅ Public site reads projects from DB
 - ✅ Specs textarea editable (was broken, fixed)
+- ✅ Admin password protection via middleware (cookie-based, 30-day sessions)
 - 🔄 Needs real content — only placeholder/test data so far
 - 🔄 nauhomes.com DNS not connected to Vercel yet
 - 🔄 Google Analytics / error monitoring not set up
@@ -161,22 +163,55 @@ No manual Vercel deploys needed. Ever.
 - Real Open Graph images (currently Unsplash placeholders)
 
 ### P3 - Hardening
-- Admin panel authentication (currently open — anyone can edit!)
 - Rate limiting on `/api/upload`
 - CSP headers
 - Backup strategy for Postgres data
 
 ---
 
-## 🚨 Known issue: Admin panel has no auth
 
-**Right now, anyone who knows the `/admin` URL can create/edit/delete projects and upload files to your Blob storage.** This needs to be fixed before wide launch. Options:
+---
 
-1. **Simple:** Password-gate with a single env var (`ADMIN_PASSWORD`), middleware checks a cookie
-2. **Proper:** NextAuth.js with email/password or Google OAuth
-3. **Quickest:** Put Vercel's built-in "Password Protection" on the whole preview deployment (Pro plan only)
+## 🔐 Admin authentication (added 2026-04-23)
 
-For launch — bare minimum is option 1. Flag this before going live at nauhomes.com.
+**How it works:**
+- `src/middleware.ts` intercepts requests to `/admin/**` and mutation verbs (POST/PUT/PATCH/DELETE) on protected API routes.
+- Public GET endpoints stay open so the homepage and public pages can keep reading the DB.
+- Cookie name: `nau_admin`. Value: `SHA-256("nau::" + ADMIN_PASSWORD)`.
+- 30-day `httpOnly`, `secure`, `sameSite=lax` cookie.
+
+**Protected paths:**
+```
+/admin/**                  (UI — except /admin/login)
+/api/projects/**           (mutations only)
+/api/upload/**
+/api/testimonials/**
+/api/media/**
+/api/settings/**
+/api/leads/**
+```
+
+**Login flow:**
+1. User hits `/admin/*` without cookie → 307 redirect to `/admin/login?next=...`
+2. User submits password → `POST /api/admin/login` verifies against `ADMIN_PASSWORD` env var
+3. On success: sets `nau_admin` cookie, redirects back to `next`
+4. On failure: 401 + 500ms delay (slows brute force)
+
+**Password rotation:**
+- Change `ADMIN_PASSWORD` in Vercel → redeploy → all existing cookies invalidated (their hash no longer matches)
+
+**Logout:**
+- `POST /api/admin/logout` clears the cookie (no UI link yet — add later)
+
+**Files:**
+```
+src/middleware.ts                         # Auth gate
+src/app/admin/login/page.tsx              # Login form
+src/app/api/admin/login/route.ts          # Verifies + sets cookie
+src/app/api/admin/logout/route.ts         # Clears cookie
+```
+
+**Caveat:** Single shared password — not per-user. Fine for solo/small-team use. Upgrade to NextAuth.js if you add more admins.
 
 ---
 
@@ -236,6 +271,8 @@ src/
 ## Recent commits on `main`
 
 ```
+9327d8c feat: add admin password protection via middleware
+5a06d90 docs: comprehensive project context + post-mortem
 426dc6a Fix Specs textarea unresponsive in admin: use raw string state
 a325cc4 Fix broken admin panel: real Vercel Postgres + Blob storage
 ```
