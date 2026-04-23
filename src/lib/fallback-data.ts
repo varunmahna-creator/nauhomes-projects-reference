@@ -1,5 +1,7 @@
 // Fallback database for immediate testing
-export const fallbackProjects = [
+import type { Project } from '@/types';
+
+export const fallbackProjects: Project[] = [
   {
     slug: 'luxury-villa-gk1',
     title: 'Luxury Villa GK-1',

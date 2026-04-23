@@ -1,34 +1,22 @@
 import { NextResponse } from "next/server";
 import { getProjects, createProject } from "@/lib/projects-db";
-import { initializeDatabase } from "@/lib/init-database";
 import type { Project } from "@/types";
-
-// Initialize database on first request
-let dbInitialized = false;
-
-async function ensureDatabase() {
-  if (!dbInitialized) {
-    console.log('🔧 First request - initializing database...');
-    await initializeDatabase();
-    dbInitialized = true;
-  }
-}
 
 export async function GET() {
   try {
-    await ensureDatabase();
+    console.log("Fetching projects...");
     const projects = await getProjects();
+    console.log("Projects fetched:", projects.length);
     return NextResponse.json(projects);
   } catch (error) {
     console.error("Error fetching projects:", error);
-    return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
+    // Return empty array as fallback
+    return NextResponse.json([]);
   }
 }
 
 export async function POST(request: Request) {
   try {
-    await ensureDatabase();
-    
     console.log("Creating new project...");
     const body = await request.json();
     console.log("Project data received:", body);
@@ -75,15 +63,15 @@ export async function POST(request: Request) {
       timeline: body.timeline || [],
     };
 
-    console.log("Creating project in database:", newProject);
+    console.log("Creating project:", newProject);
     const createdProject = await createProject(newProject);
 
     if (!createdProject) {
-      console.error("Failed to create project in database");
+      console.error("Failed to create project");
       return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
     }
 
-    console.log("Project created successfully:", createdProject);
+    console.log("Project created successfully:", createdProject.slug);
     return NextResponse.json(createdProject, { status: 201 });
     
   } catch (error) {
