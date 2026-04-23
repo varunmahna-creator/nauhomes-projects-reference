@@ -16,9 +16,9 @@ export async function POST(request: Request) {
     }
 
     // Validate file type
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/quicktime", "video/webm", "application/pdf", "application/pdf"];
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/quicktime", "video/webm", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, PDF, PDF" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, PDF" }, { status: 400 });
     }
 
     // Create directory based on category

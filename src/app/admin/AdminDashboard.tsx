@@ -697,7 +697,14 @@ export default function AdminDashboard() {
               </div>
               <div className="mt-4"><label className={labelClass}>Specs (key: value per line)</label><textarea className={cn(inputClass, "resize-none")} rows={6} value={Object.entries(projectForm.specs || {}).map(([k, v]) => `${k}: ${v}`).join("\n")} onChange={e => {
                 const specs: Record<string, string> = {};
-                e.target.value.split("\n").filter(Boolean).forEach(line => { const [k, ...r] = line.split(":"); if (k && r.length) specs[k.trim()] = r.join(":").trim(); });
+                e.target.value.split("\n").filter(Boolean).forEach(line => { 
+                  const colonIndex = line.indexOf(":"); 
+                  if (colonIndex > 0) {
+                    const key = line.substring(0, colonIndex).trim();
+                    const value = line.substring(colonIndex + 1).trim();
+                    if (key && value) specs[key] = value;
+                  }
+                });
                 setProjectForm(p => ({ ...p, specs }));
               }} /></div>
             </div>
