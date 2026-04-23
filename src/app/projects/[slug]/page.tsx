@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProjects, getProjectBySlug, getRelatedProjects } from "@/lib/projects";
+import { getProjects, getProjectBySlug, getRelatedProjects } from "@/lib/projects-db";
 import ProjectDetailClient from "@/components/sections/project-detail/ProjectDetailClient";
 
 type Props = {
@@ -10,12 +10,13 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  return getProjects().map((project) => ({ slug: project.slug }));
+  const projects = await getProjects();
+  return projects.map((project) => ({ slug: project.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug);
   if (!project) return { title: "Project Not Found" };
 
   return {
@@ -30,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
-  const relatedProjects = getRelatedProjects(slug, 3);
+  const relatedProjects = await getRelatedProjects(slug, 3);
 
   return <ProjectDetailClient project={project} relatedProjects={relatedProjects} />;
 }

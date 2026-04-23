@@ -1,22 +1,34 @@
 import type { MediaItem } from "@/types";
-import fs from "fs";
-import path from "path";
 
-const DATA_PATH = path.join(process.cwd(), "data", "media.json");
+// Default media coverage data
+const defaultMedia: MediaItem[] = [
+  {
+    id: "1",
+    name: "Economic Times",
+    logoUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=200&q=80",
+    articleUrl: "#",
+    date: "2024-12-01"
+  },
+  {
+    id: "2",
+    name: "Business Standard", 
+    logoUrl: "https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=200&q=80",
+    articleUrl: "#",
+    date: "2024-11-15"
+  }
+];
+
+// In-memory storage
+let mediaStorage: MediaItem[] = [...defaultMedia];
 
 export function getMedia(): MediaItem[] {
-  try {
-    const raw = fs.readFileSync(DATA_PATH, "utf-8");
-    return JSON.parse(raw) as MediaItem[];
-  } catch {
-    return [];
-  }
+  return mediaStorage;
 }
 
-export function saveMedia(items: MediaItem[]): void {
-  fs.writeFileSync(DATA_PATH, JSON.stringify(items, null, 2), "utf-8");
+export function saveMedia(media: MediaItem[]): void {
+  mediaStorage = [...media];
 }
 
 export function getMediaById(id: string): MediaItem | undefined {
-  return getMedia().find((m) => m.id === id);
+  return mediaStorage.find((m) => m.id === id);
 }

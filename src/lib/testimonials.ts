@@ -1,18 +1,38 @@
 import type { Testimonial } from "@/types";
-import fs from "fs";
-import path from "path";
 
-const DATA_PATH = path.join(process.cwd(), "data", "testimonials.json");
+// Default testimonials data
+const defaultTestimonials: Testimonial[] = [
+  {
+    id: "1",
+    name: "Priya Sharma",
+    location: "Greater Kailash, Delhi",
+    quote: "Nirvana Group transformed our vision into reality. The attention to detail and quality of construction exceeded our expectations.",
+    rating: 5,
+    profession: "Business Owner",
+    image: "https://images.unsplash.com/photo-1494790108755-2616b612b167?w=150&q=80"
+  },
+  {
+    id: "2", 
+    name: "Rajesh Kumar",
+    location: "Noida",
+    quote: "Professional service from start to finish. The team was responsive and delivered exactly what was promised.",
+    rating: 5,
+    profession: "Software Engineer",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&q=80"
+  }
+];
+
+// In-memory storage
+let testimonialStorage: Testimonial[] = [...defaultTestimonials];
 
 export function getTestimonials(): Testimonial[] {
-  const raw = fs.readFileSync(DATA_PATH, "utf-8");
-  return JSON.parse(raw) as Testimonial[];
+  return testimonialStorage;
 }
 
 export function saveTestimonials(testimonials: Testimonial[]): void {
-  fs.writeFileSync(DATA_PATH, JSON.stringify(testimonials, null, 2), "utf-8");
+  testimonialStorage = [...testimonials];
 }
 
 export function getTestimonialById(id: string): Testimonial | undefined {
-  return getTestimonials().find((t) => t.id === id);
+  return testimonialStorage.find((t) => t.id === id);
 }
