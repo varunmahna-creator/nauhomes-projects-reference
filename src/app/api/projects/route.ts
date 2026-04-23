@@ -1,7 +1,28 @@
 import { NextResponse } from "next/server";
 
+interface ProjectData {
+  slug: string;
+  title: string;
+  subtitle: string;
+  location: string;
+  locationLabel: string;
+  status: string;
+  type: string;
+  area: string;
+  year: string;
+  thumbnail: string;
+  gallery: Array<{ src: string; alt: string }>;
+  floorPlans: Array<{ src: string; alt: string }>;
+  tourEmbedUrl: string | null;
+  description: string;
+  highlights: string[];
+  amenities: string[];
+  specs: Record<string, string>;
+  timeline: any[];
+}
+
 // Simple in-memory storage that works in serverless
-let projects: any[] = [
+let projects: ProjectData[] = [
   {
     slug: 'luxury-villa-delhi',
     title: 'Luxury Villa Delhi',
@@ -51,8 +72,13 @@ let projects: any[] = [
 ];
 
 export async function GET() {
-  console.log('📊 GET /api/projects - returning projects:', projects.length);
-  return NextResponse.json(projects);
+  try {
+    console.log('📊 GET /api/projects - returning projects:', projects.length);
+    return NextResponse.json(projects);
+  } catch (error) {
+    console.error('Error in GET /api/projects:', error);
+    return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -73,7 +99,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Project already exists" }, { status: 400 });
     }
 
-    const newProject = {
+    const newProject: ProjectData = {
       slug,
       title: body.title,
       subtitle: body.subtitle || "",
