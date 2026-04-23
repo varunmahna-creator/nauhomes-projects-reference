@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [projectViewMode, setProjectViewMode] = useState<ViewMode>("list");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectForm, setProjectForm] = useState<Partial<Project>>({});
+  const [specsText, setSpecsText] = useState<string>("");
 
   // === TESTIMONIAL STATE ===
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -149,11 +150,17 @@ export default function AdminDashboard() {
       description: "", highlights: [], amenities: [], specs: {}, timeline: [],
     });
     setEditingProject(null);
+    setSpecsText("");
     setProjectViewMode("create");
   }
 
   function startEditProject(p: Project) {
     setProjectForm({ ...p, timeline: p.timeline || [] });
+    setSpecsText(
+      Object.entries(p.specs || {})
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n")
+    );
     setEditingProject(p);
     setProjectViewMode("edit");
   }
@@ -162,13 +169,23 @@ export default function AdminDashboard() {
     console.log("Saving project:", projectForm);
     if (!projectForm.title) { showMsg("error", "Title is required"); return; }
     setSaving(true);
+    const parsedSpecs: Record<string, string> = {};
+    specsText.split("\n").forEach((line) => {
+      const colonIndex = line.indexOf(":");
+      if (colonIndex > 0) {
+        const key = line.substring(0, colonIndex).trim();
+        const value = line.substring(colonIndex + 1).trim();
+        if (key && value) parsedSpecs[key] = value;
+      }
+    });
+    const formToSubmit = { ...projectForm, specs: parsedSpecs };
     try {
       const url = projectViewMode === "edit" && editingProject
         ? `/api/projects/${editingProject.slug}` : "/api/projects";
       const res = await fetch(url, {
         method: projectViewMode === "edit" ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(projectForm),
+        body: JSON.stringify(formToSubmit),
       });
       if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
       showMsg("success", projectViewMode === "edit" ? "Project updated!" : "Project created!");
@@ -697,18 +714,7 @@ export default function AdminDashboard() {
                 <div><label className={labelClass}>Highlights (one per line)</label><textarea className={cn(inputClass, "resize-none")} rows={6} value={(projectForm.highlights || []).join("\n")} onChange={e => setProjectForm(p => ({ ...p, highlights: e.target.value.split("\n").filter(Boolean) }))} /></div>
                 <div><label className={labelClass}>Amenities (one per line)</label><textarea className={cn(inputClass, "resize-none")} rows={6} value={(projectForm.amenities || []).join("\n")} onChange={e => setProjectForm(p => ({ ...p, amenities: e.target.value.split("\n").filter(Boolean) }))} /></div>
               </div>
-              <div className="mt-4"><label className={labelClass}>Specs (key: value per line)</label><textarea className={cn(inputClass, "resize-none")} rows={6} value={Object.entries(projectForm.specs || {}).map(([k, v]) => `${k}: ${v}`).join("\n")} onChange={e => {
-                const specs: Record<string, string> = {};
-                e.target.value.split("\n").filter(Boolean).forEach(line => { 
-                  const colonIndex = line.indexOf(":"); 
-                  if (colonIndex > 0) {
-                    const key = line.substring(0, colonIndex).trim();
-                    const value = line.substring(colonIndex + 1).trim();
-                    if (key && value) specs[key] = value;
-                  }
-                });
-                setProjectForm(p => ({ ...p, specs }));
-              }} /></div>
+              <div className="mt-4"><label className={labelClass}>Specs (key: value per line)</label><textarea className={cn(inputClass, "resize-none")} rows={6} placeholder="Bedrooms: 4&#10;Bathrooms: 5&#10;Parking: 3 Cars" value={specsText} onChange={e => setSpecsText(e.target.value)} /></div>
             </div>
 
             {/* ===== CONSTRUCTION TIMELINE ===== */}
