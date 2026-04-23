@@ -159,6 +159,7 @@ export default function AdminDashboard() {
   }
 
   async function handleSaveProject() {
+    console.log("Saving project:", projectForm);
     if (!projectForm.title) { showMsg("error", "Title is required"); return; }
     setSaving(true);
     try {
@@ -189,6 +190,7 @@ export default function AdminDashboard() {
   // === Project image uploads ===
   async function handleProjectImageUpload(e: React.ChangeEvent<HTMLInputElement>, imageType: "gallery" | "floorplan" | "thumbnail") {
     const files = e.target.files;
+    console.log("Upload attempt:", { files: files?.length, type: imageType });
     if (!files?.length) return;
     const slug = editingProject?.slug || projectForm.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new-project";
     setUploading(true);

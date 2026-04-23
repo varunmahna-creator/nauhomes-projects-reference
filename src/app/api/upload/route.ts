@@ -12,8 +12,15 @@ export async function POST(request: Request) {
     const testimonialId = formData.get("testimonialId") as string;
 
     if (!file) {
+      console.log("Upload failed: No file provided");
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
+
+    console.log("File upload attempt:", {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/quicktime", "video/webm", "application/pdf"];
@@ -47,7 +54,9 @@ export async function POST(request: Request) {
 
     // Write file
     const buffer = Buffer.from(await file.arrayBuffer());
+    console.log("Writing file to:", filePath);
     fs.writeFileSync(filePath, buffer);
+    console.log("File written successfully");
 
     // Return the public URL path based on category
     if (category === "media") {
@@ -62,6 +71,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ path: publicPath, filename });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    console.error("Upload error:", error);
+    return NextResponse.json({ 
+      error: "Failed to upload file", 
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 });
   }
 }

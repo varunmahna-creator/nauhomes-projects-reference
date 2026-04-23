@@ -9,8 +9,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    console.log("Creating new project...");
     const body = await request.json();
+    console.log("Project data received:", body);
+    
+    // Validate required fields
+    if (!body.title || !body.title.trim()) {
+      console.log("Validation failed: Missing title");
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
     const projects = getProjects();
+    console.log("Current projects count:", projects.length);
 
     // Generate slug from title
     const slug = body.title
@@ -18,8 +28,11 @@ export async function POST(request: Request) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
+    console.log("Generated slug:", slug);
+
     // Check for duplicate slug
     if (projects.find((p: Project) => p.slug === slug)) {
+      console.log("Duplicate slug found:", slug);
       return NextResponse.json({ error: "A project with this name already exists" }, { status: 400 });
     }
 
@@ -44,11 +57,17 @@ export async function POST(request: Request) {
       timeline: body.timeline || [],
     };
 
+    console.log("Saving project:", newProject);
     projects.push(newProject);
     saveProjects(projects);
+    console.log("Project saved successfully");
 
     return NextResponse.json(newProject, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
+    console.error("Project creation error:", error);
+    return NextResponse.json({ 
+      error: "Failed to create project", 
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 });
   }
 }
