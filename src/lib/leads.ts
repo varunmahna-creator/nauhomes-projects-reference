@@ -1,22 +1,39 @@
 import type { Lead } from "@/types";
-import fs from "fs";
-import path from "path";
 
-const DATA_PATH = path.join(process.cwd(), "data", "leads.json");
+// Default leads data (empty for fresh start)
+const defaultLeads: Lead[] = [];
+
+// In-memory storage
+let leadsStorage: Lead[] = [...defaultLeads];
 
 export function getLeads(): Lead[] {
-  try {
-    const raw = fs.readFileSync(DATA_PATH, "utf-8");
-    return JSON.parse(raw) as Lead[];
-  } catch {
-    return [];
-  }
+  return leadsStorage;
 }
 
 export function saveLeads(leads: Lead[]): void {
-  fs.writeFileSync(DATA_PATH, JSON.stringify(leads, null, 2), "utf-8");
+  leadsStorage = [...leads];
 }
 
 export function getLeadById(id: string): Lead | undefined {
-  return getLeads().find((l) => l.id === id);
+  return leadsStorage.find((l) => l.id === id);
+}
+
+export function addLead(lead: Lead): void {
+  leadsStorage.push(lead);
+}
+
+export function updateLead(id: string, updates: Partial<Lead>): Lead | null {
+  const index = leadsStorage.findIndex((l) => l.id === id);
+  if (index === -1) return null;
+  
+  leadsStorage[index] = { ...leadsStorage[index], ...updates };
+  return leadsStorage[index];
+}
+
+export function deleteLead(id: string): boolean {
+  const index = leadsStorage.findIndex((l) => l.id === id);
+  if (index === -1) return false;
+  
+  leadsStorage.splice(index, 1);
+  return true;
 }
