@@ -654,23 +654,36 @@ export default function AdminDashboard() {
                 <h2 className="text-lg font-bold text-navy" style={{ fontFamily: "var(--font-heading)" }}>Floor Plans ({(projectForm.floorPlans || []).length})</h2>
                 <label className="flex items-center gap-1.5 rounded-lg bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold-dark cursor-pointer">
                   <Upload className="h-3.5 w-3.5" /> Add
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleProjectImageUpload(e, "floorplan")} />
+                  <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={e => handleProjectImageUpload(e, "floorplan")} />
                 </label>
               </div>
               {(projectForm.floorPlans || []).length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {(projectForm.floorPlans || []).map((fp, i) => (
-                    <div key={i} className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-cream border border-gray-200">
-                      <img src={fp.src} alt={fp.alt} className="h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      <button onClick={() => setProjectForm(p => ({ ...p, floorPlans: (p.floorPlans || []).filter((_, j) => j !== i) }))}
-                        className="absolute top-1 right-1 z-10 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer"><X className="h-3 w-3" /></button>
-                    </div>
-                  ))}
+                  {(projectForm.floorPlans || []).map((fp, i) => {
+                    const isPDF = fp.src.toLowerCase().endsWith('.pdf');
+                    return (
+                      <div key={i} className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-cream border border-gray-200">
+                        {isPDF ? (
+                          <div className="h-full w-full flex flex-col items-center justify-center p-4 bg-gray-50">
+                            <svg className="h-8 w-8 text-red-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                            </svg>
+                            <p className="text-xs font-medium text-gray-600 text-center break-all">{fp.alt || 'Floor Plan'}</p>
+                            <a href={fp.src} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1">View PDF</a>
+                          </div>
+                        ) : (
+                          <img src={fp.src} alt={fp.alt} className="h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        )}
+                        <button onClick={() => setProjectForm(p => ({ ...p, floorPlans: (p.floorPlans || []).filter((_, j) => j !== i) }))}
+                          className="absolute top-1 right-1 z-10 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer"><X className="h-3 w-3" /></button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-200 px-6 py-6 hover:border-gold/50">
-                  <ImageIcon className="h-8 w-8 text-muted/50" /><span className="text-sm text-muted">Upload floor plans</span>
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleProjectImageUpload(e, "floorplan")} />
+                  <ImageIcon className="h-8 w-8 text-muted/50" /><span className="text-sm text-muted">Upload floor plans (images or PDFs)</span>
+                  <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={e => handleProjectImageUpload(e, "floorplan")} />
                 </label>
               )}
             </div>
@@ -732,7 +745,7 @@ export default function AdminDashboard() {
                           <label className={labelClass}>Progress Photos ({entry.images.length})</label>
                           <label className="flex items-center gap-1 rounded bg-gold/10 px-2 py-1 text-[10px] font-semibold text-gold-dark cursor-pointer">
                             <Upload className="h-3 w-3" /> Upload
-                            <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleTimelineImageUpload(e, idx)} />
+                            <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={e => handleTimelineImageUpload(e, idx)} />
                           </label>
                         </div>
                         {entry.images.length > 0 && (
@@ -974,7 +987,7 @@ export default function AdminDashboard() {
               ) : (
                 <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-200 px-6 py-8 hover:border-gold/50">
                   <Upload className="h-8 w-8 text-muted/50" /><span className="text-sm font-medium text-muted">Upload profile photo</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleTestimonialPhotoUpload} />
+                  <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleTestimonialPhotoUpload} />
                 </label>
               )}
             </div>
@@ -1123,7 +1136,7 @@ export default function AdminDashboard() {
               ) : (
                 <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-200 px-6 py-8 hover:border-gold/50">
                   <Upload className="h-8 w-8 text-muted/50" /><span className="text-sm font-medium text-muted">Upload logo</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleMediaLogoUpload} />
+                  <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleMediaLogoUpload} />
                 </label>
               )}
             </div>
@@ -1199,7 +1212,7 @@ export default function AdminDashboard() {
                         />
                         <label className="flex shrink-0 items-center gap-1 rounded-lg bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold-dark cursor-pointer hover:bg-gold/20">
                           <Upload className="h-3.5 w-3.5" />
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={async (e) => {
                             const files = e.target.files;
                             if (!files?.length) return;
                             const fd = new FormData();

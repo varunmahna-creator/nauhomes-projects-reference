@@ -1,0 +1,20 @@
+                  {(projectForm.floorPlans || []).map((fp, i) => {
+                    const isPDF = fp.src.toLowerCase().endsWith('.pdf');
+                    return (
+                      <div key={i} className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-cream border border-gray-200">
+                        {isPDF ? (
+                          <div className="h-full w-full flex flex-col items-center justify-center p-4 bg-gray-50">
+                            <svg className="h-8 w-8 text-red-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                            </svg>
+                            <p className="text-xs font-medium text-gray-600 text-center break-all">{fp.alt || 'Floor Plan'}</p>
+                            <a href={fp.src} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1">View PDF</a>
+                          </div>
+                        ) : (
+                          <img src={fp.src} alt={fp.alt} className="h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        )}
+                        <button onClick={() => setProjectForm(p => ({ ...p, floorPlans: (p.floorPlans || []).filter((_, j) => j !== i) }))}
+                          className="absolute top-1 right-1 z-10 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer"><X className="h-3 w-3" /></button>
+                      </div>
+                    );
+                  })}
