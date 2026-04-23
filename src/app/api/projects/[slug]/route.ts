@@ -1,70 +1,78 @@
 import { NextResponse } from "next/server";
-import { getProjectBySlug, updateProject, deleteProject } from "@/lib/projects-db";
-import type { Project } from "@/types";
+import {
+  getProjectBySlug,
+  updateProject,
+  deleteProject,
+} from "@/lib/projects-db";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type RouteContext = { params: Promise<{ slug: string }> };
+
+export async function GET(_request: Request, { params }: RouteContext) {
   try {
-    const project = await getProjectBySlug(params.slug);
-    
+    const { slug } = await params;
+    const project = await getProjectBySlug(slug);
     if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Project not found" },
+        { status: 404 }
+      );
     }
-    
     return NextResponse.json(project);
   } catch (error) {
-    console.error("Error fetching project:", error);
-    return NextResponse.json({ error: "Failed to fetch project" }, { status: 500 });
+    console.error("GET /api/projects/[slug] error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch project" },
+      { status: 500 }
+    );
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function PUT(request: Request, { params }: RouteContext) {
   try {
+    const { slug } = await params;
     const body = await request.json();
-    console.log("Updating project:", params.slug, body);
-    
-    const updatedProject = await updateProject(params.slug, body);
-    
-    if (!updatedProject) {
-      return NextResponse.json({ error: "Failed to update project" }, { status: 500 });
+    const updated = await updateProject(slug, body);
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Project not found or update failed", slug },
+        { status: 404 }
+      );
     }
-    
-    console.log("Project updated successfully:", updatedProject);
-    return NextResponse.json(updatedProject);
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error("Project update error:", error);
-    return NextResponse.json({ 
-      error: "Failed to update project", 
-      details: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 });
+    console.error("PUT /api/projects/[slug] error:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to update project",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
-    console.log("Deleting project:", params.slug);
-    
-    const success = await deleteProject(params.slug);
-    
+    const { slug } = await params;
+    const success = await deleteProject(slug);
     if (!success) {
-      return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Project not found", slug },
+        { status: 404 }
+      );
     }
-    
-    console.log("Project deleted successfully:", params.slug);
-    return NextResponse.json({ message: "Project deleted successfully" });
+    return NextResponse.json({ message: "Project deleted", slug });
   } catch (error) {
-    console.error("Project deletion error:", error);
-    return NextResponse.json({ 
-      error: "Failed to delete project", 
-      details: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 });
+    console.error("DELETE /api/projects/[slug] error:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to delete project",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }

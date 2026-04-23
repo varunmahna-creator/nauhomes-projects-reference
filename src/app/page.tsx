@@ -74,7 +74,8 @@ export default async function Page() {
       projects={projects}
       testimonials={testimonials}
       media={media}
-      settings={settings}
+      sectionVisibility={settings.sectionVisibility}
+      homepageImages={settings.homepageImages}
     />
   );
 }
