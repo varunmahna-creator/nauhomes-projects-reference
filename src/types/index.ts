@@ -12,6 +12,7 @@ export interface TimelineEntry {
   title: string;
   description: string;
   images: ProjectImage[];
+  videos?: ProjectImage[];
 }
 
 export interface Project {
