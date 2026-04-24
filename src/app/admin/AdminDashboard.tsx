@@ -324,7 +324,13 @@ export default function AdminDashboard() {
         fd.append("category", "timeline");
         
         const uploadEndpoint = "/api/upload-large";
-        const res = await fetch(uploadEndpoint, { method: "POST", body: fd });
+        console.log(`Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB) to ${uploadEndpoint}`);
+        const res = await fetch(uploadEndpoint, { 
+          method: "POST", 
+          body: fd,
+          // Add timeout for large files
+          signal: AbortSignal.timeout(120000) // 2 minute timeout
+        });
         
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: `Upload failed (${res.status})` }));

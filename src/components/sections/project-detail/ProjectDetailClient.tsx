@@ -192,30 +192,67 @@ export default function ProjectDetailClient({ project, relatedProjects }: Projec
                                 )}
                               </div>
 
-                              {/* Right: photos grid */}
+                              {/* Right: photos and videos grid */}
                               <div className="lg:col-span-3">
-                                {entry.images && entry.images.length > 0 ? (
-                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                    {entry.images.map((img, imgIndex) => (
-                                      <button
-                                        key={imgIndex}
-                                        type="button"
-                                        onClick={() => openLightbox(entry.images, imgIndex)}
-                                        className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-navy/5 cursor-pointer"
-                                      >
-                                        <ProjectImage src={img.src} alt={img.alt} />
-                                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                                          <Maximize className="h-5 w-5 text-white" />
-                                        </div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-cream/50 py-8">
-                                    <p className="text-xs text-muted">No photos yet</p>
-                                  </div>
-                                )}
+                                <div className="space-y-4">
+                                  {/* Photos section */}
+                                  {entry.images && entry.images.length > 0 && (
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-navy mb-2">Photos</h5>
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        {entry.images.map((img, imgIndex) => (
+                                          <button
+                                            key={imgIndex}
+                                            type="button"
+                                            onClick={() => openLightbox(entry.images, imgIndex)}
+                                            className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-navy/5 cursor-pointer"
+                                          >
+                                            <ProjectImage src={img.src} alt={img.alt} />
+                                            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+                                              <Maximize className="h-5 w-5 text-white" />
+                                            </div>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Videos section */}
+                                  {entry.videos && entry.videos.length > 0 && (
+                                    <div>
+                                      <h5 className="text-sm font-semibold text-navy mb-2">Progress Videos</h5>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {entry.videos.map((vid, vidIndex) => (
+                                          <div
+                                            key={vidIndex}
+                                            className="relative aspect-video overflow-hidden rounded-lg bg-navy/5 border border-gray-200"
+                                          >
+                                            <video 
+                                              src={vid.src} 
+                                              className="h-full w-full object-cover" 
+                                              controls
+                                              preload="metadata"
+                                              poster=""
+                                            >
+                                              Your browser does not support the video tag.
+                                            </video>
+                                            <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
+                                              {vid.alt}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Empty state */}
+                                  {(!entry.images || entry.images.length === 0) && (!entry.videos || entry.videos.length === 0) && (
+                                    <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-cream/50 py-8">
+                                      <p className="text-xs text-muted">No media yet</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
