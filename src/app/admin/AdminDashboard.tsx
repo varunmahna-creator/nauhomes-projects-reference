@@ -344,6 +344,7 @@ export default function AdminDashboard() {
       }
       showMsg("success", "Timeline videos uploaded");
     } catch (error) { 
+      console.error('Timeline video upload error:', error);
       showMsg("error", `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`); 
     } finally { 
       setUploading(false); 
