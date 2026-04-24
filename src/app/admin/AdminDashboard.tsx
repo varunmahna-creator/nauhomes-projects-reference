@@ -9,6 +9,7 @@ import {
   ExternalLink, Newspaper
 } from "lucide-react";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
 import type {
   Project, ProjectImage, Testimonial, TimelineEntry,
   MediaItem, SiteSettings, SocialLinks, SectionVisibility,
@@ -148,6 +149,7 @@ export default function AdminDashboard() {
       status: "ongoing", type: "", area: "", year: "",
       thumbnail: "", gallery: [], floorPlans: [], tourEmbedUrl: "",
       description: "", highlights: [], amenities: [], specs: {}, timeline: [],
+      virtualTourVideos: [],
     });
     setEditingProject(null);
     setSpecsText("");
@@ -304,58 +306,108 @@ export default function AdminDashboard() {
   }
 
 
+  // Client-side direct upload to Vercel Blob. Bypasses the 4.5MB serverless
+  // function body limit entirely — the browser POSTs straight to Blob, our
+  // /api/blob-upload route only hands out short-lived signed tokens.
+  // See src/app/api/blob-upload/route.ts.
+  async function uploadVideoToBlob(
+    file: File,
+    slug: string,
+    kind: "timeline" | "virtual-tour"
+  ): Promise<string> {
+    const MAX_SIZE_BYTES = 500 * 1024 * 1024; // 500MB
+    if (file.size > MAX_SIZE_BYTES) {
+      throw new Error(
+        `Video "${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 500MB.`
+      );
+    }
+
+    // Strip extension + sanitise the base name so it passes our server-side
+    // pathname regex in blob-upload/route.ts (PATH_RE).
+    const dot = file.name.lastIndexOf(".");
+    const base = (dot > 0 ? file.name.slice(0, dot) : file.name)
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "video";
+    const ext = (dot > 0 ? file.name.slice(dot + 1) : "mp4")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "") || "mp4";
+    const timestamp = Date.now();
+    const subfolder = kind === "timeline" ? "timeline" : "virtual-tour";
+    const pathname = `projects/${slug}/${subfolder}/${base}-${timestamp}.${ext}`;
+
+    const blob = await upload(pathname, file, {
+      access: "public",
+      handleUploadUrl: "/api/blob-upload",
+      contentType: file.type,
+      // Multipart = auto-chunked parallel upload with retries. Essential for
+      // 50MB+ videos on unreliable networks.
+      multipart: true,
+    });
+    return blob.url;
+  }
+
   async function handleTimelineVideoUpload(e: React.ChangeEvent<HTMLInputElement>, entryIndex: number) {
     const files = e.target.files;
     if (!files?.length) return;
     const slug = editingProject?.slug || projectForm.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new-project";
-    
+
     setUploading(true);
-    
     try {
       for (const file of Array.from(files)) {
-        const maxSizeBytes = 50 * 1024 * 1024; // 50MB limit for videos
-        if (file.size > maxSizeBytes) {
-          throw new Error(`Video "${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 50MB.`);
-        }
-        
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("slug", slug);
-        fd.append("category", "timeline");
-        
-        const uploadEndpoint = "/api/upload-large";
-        console.log(`Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB) to ${uploadEndpoint}`);
-        const res = await fetch(uploadEndpoint, { 
-          method: "POST", 
-          body: fd,
-          // Add timeout for large files
-          signal: AbortSignal.timeout(120000) // 2 minute timeout
-        });
-        
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ error: `Upload failed (${res.status})` }));
-          throw new Error(errorData.error || 'Upload failed');
-        }
-        
-        const { path: p } = await res.json();
-        
+        const url = await uploadVideoToBlob(file, slug, "timeline");
         setProjectForm(prev => {
           const timeline = [...(prev.timeline || [])];
           timeline[entryIndex] = {
             ...timeline[entryIndex],
-            videos: [...(timeline[entryIndex].videos || []), { src: p, alt: file.name.replace(/\.[^.]+$/, "") }],
+            videos: [...(timeline[entryIndex].videos || []), { src: url, alt: file.name.replace(/\.[^.]+$/, "") }],
           };
           return { ...prev, timeline };
         });
       }
       showMsg("success", "Timeline videos uploaded");
-    } catch (error) { 
-      console.error('Timeline video upload error:', error);
-      showMsg("error", `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`); 
-    } finally { 
-      setUploading(false); 
-      e.target.value = ""; 
+    } catch (error) {
+      console.error("Timeline video upload error:", error);
+      showMsg("error", `Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
     }
+  }
+
+  async function handleVirtualTourVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files?.length) return;
+    const slug = editingProject?.slug || projectForm.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new-project";
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const url = await uploadVideoToBlob(file, slug, "virtual-tour");
+        setProjectForm(prev => ({
+          ...prev,
+          virtualTourVideos: [
+            ...(prev.virtualTourVideos || []),
+            { src: url, alt: file.name.replace(/\.[^.]+$/, "") },
+          ],
+        }));
+      }
+      showMsg("success", "Virtual tour videos uploaded");
+    } catch (error) {
+      console.error("Virtual tour video upload error:", error);
+      showMsg("error", `Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  function removeVirtualTourVideo(videoIndex: number) {
+    setProjectForm(prev => ({
+      ...prev,
+      virtualTourVideos: (prev.virtualTourVideos || []).filter((_, i) => i !== videoIndex),
+    }));
   }
 
   function removeTimelineVideo(entryIndex: number, videoIndex: number) {
@@ -687,7 +739,35 @@ export default function AdminDashboard() {
                 <div><label className={labelClass}>Year</label><input className={inputClass} placeholder="2024" value={projectForm.year || ""} onChange={e => setProjectForm(p => ({ ...p, year: e.target.value }))} /></div>
               </div>
               <div className="mt-4"><label className={labelClass}>Description</label><textarea className={cn(inputClass, "resize-none")} rows={4} value={projectForm.description || ""} onChange={e => setProjectForm(p => ({ ...p, description: e.target.value }))} /></div>
-              <div className="mt-4"><label className={labelClass}>360° Tour URL</label><input className={inputClass} placeholder="https://my.matterport.com/show/?m=..." value={projectForm.tourEmbedUrl || ""} onChange={e => setProjectForm(p => ({ ...p, tourEmbedUrl: e.target.value || null }))} /></div>
+              <div className="mt-4"><label className={labelClass}>Virtual Tour Embed URL</label><input className={inputClass} placeholder="https://my.matterport.com/show/?m=..." value={projectForm.tourEmbedUrl || ""} onChange={e => setProjectForm(p => ({ ...p, tourEmbedUrl: e.target.value || null }))} /></div>
+            </div>
+
+            {/* Virtual Tour Videos */}
+            <div className="rounded-xl bg-white p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-bold text-navy" style={{ fontFamily: "var(--font-heading)" }}>Virtual Tour Videos ({(projectForm.virtualTourVideos || []).length})</h2>
+                <label className="flex items-center gap-1.5 rounded-lg bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold-dark cursor-pointer">
+                  <Upload className="h-3.5 w-3.5" /> Upload Video
+                  <input type="file" accept="video/*" multiple className="hidden" onChange={handleVirtualTourVideoUpload} />
+                </label>
+              </div>
+              <p className="text-xs text-muted mb-4">💡 Full property walkthrough videos. Up to 500MB each. Shown in the Virtual Tour tab alongside any embedded tour.</p>
+              {(projectForm.virtualTourVideos || []).length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(projectForm.virtualTourVideos || []).map((vid, i) => (
+                    <div key={i} className="group relative aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                      <video src={vid.src} className="h-full w-full object-cover" controls preload="metadata" />
+                      <div className="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-xs text-white pointer-events-none">{vid.alt}</div>
+                      <button onClick={() => removeVirtualTourVideo(i)} className="absolute top-1 right-1 hidden group-hover:flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer"><X className="h-3 w-3" /></button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-gray-200 px-6 py-8 hover:border-gold/50">
+                  <Video className="h-8 w-8 text-muted/50" /><span className="text-sm text-muted">Upload virtual tour videos</span>
+                  <input type="file" accept="video/*" multiple className="hidden" onChange={handleVirtualTourVideoUpload} />
+                </label>
+              )}
             </div>
 
             {/* Thumbnail */}
@@ -851,7 +931,7 @@ export default function AdminDashboard() {
                           </label>
                         </div>
                         <div className="mb-2">
-                          <p className="text-xs text-muted">💡 Videos up to 50MB supported.</p>
+                          <p className="text-xs text-muted">💡 Videos up to 500MB supported. Uploads go directly to Vercel Blob.</p>
                         </div>
                         {(entry.videos || []).length > 0 && (
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
