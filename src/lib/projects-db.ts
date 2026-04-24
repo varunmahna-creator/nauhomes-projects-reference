@@ -32,6 +32,12 @@ async function ensureSchema(): Promise<void> {
         updated_at      TIMESTAMPTZ DEFAULT NOW()
       );
     `;
+    // Migration: add virtual_tour_videos column for projects that pre-date
+    // the virtual-tour-video feature. No-op if it already exists.
+    await sql`
+      ALTER TABLE projects
+      ADD COLUMN IF NOT EXISTS virtual_tour_videos JSONB DEFAULT '[]'::jsonb;
+    `;
     await sql`CREATE INDEX IF NOT EXISTS projects_location_idx ON projects(location);`;
     await sql`CREATE INDEX IF NOT EXISTS projects_status_idx ON projects(status);`;
   })();
@@ -62,6 +68,8 @@ function rowToProject(row: Record<string, unknown>): Project {
     amenities: (row.amenities as string[]) ?? [],
     specs: (row.specs as Record<string, string>) ?? {},
     timeline: (row.timeline as Project["timeline"]) ?? [],
+    virtualTourVideos:
+      (row.virtual_tour_videos as Project["virtualTourVideos"]) ?? [],
   };
 }
 
@@ -113,7 +121,8 @@ export async function createProject(
       INSERT INTO projects (
         slug, title, subtitle, location, location_label, status,
         type, area, year, thumbnail, gallery, floor_plans,
-        tour_embed_url, description, highlights, amenities, specs, timeline
+        tour_embed_url, description, highlights, amenities, specs, timeline,
+        virtual_tour_videos
       ) VALUES (
         ${project.slug},
         ${project.title},
@@ -132,7 +141,8 @@ export async function createProject(
         ${JSON.stringify(project.highlights ?? [])}::jsonb,
         ${JSON.stringify(project.amenities ?? [])}::jsonb,
         ${JSON.stringify(project.specs ?? {})}::jsonb,
-        ${JSON.stringify(project.timeline ?? [])}::jsonb
+        ${JSON.stringify(project.timeline ?? [])}::jsonb,
+        ${JSON.stringify(project.virtualTourVideos ?? [])}::jsonb
       )
       RETURNING *;
     `;
@@ -175,6 +185,7 @@ export async function updateProject(
         amenities = ${JSON.stringify(merged.amenities ?? [])}::jsonb,
         specs = ${JSON.stringify(merged.specs ?? {})}::jsonb,
         timeline = ${JSON.stringify(merged.timeline ?? [])}::jsonb,
+        virtual_tour_videos = ${JSON.stringify(merged.virtualTourVideos ?? [])}::jsonb,
         updated_at = NOW()
       WHERE slug = ${slug}
       RETURNING *;

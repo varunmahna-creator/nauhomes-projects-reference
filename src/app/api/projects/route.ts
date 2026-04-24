@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       amenities: Array.isArray(body.amenities) ? body.amenities : [],
       specs: typeof body.specs === "object" && body.specs ? body.specs : {},
       timeline: Array.isArray(body.timeline) ? body.timeline : [],
+      virtualTourVideos: Array.isArray(body.virtualTourVideos) ? body.virtualTourVideos : [],
     };
 
     const created = await createProject(project);

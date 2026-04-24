@@ -34,6 +34,7 @@ export interface Project {
   amenities: string[];
   specs: Record<string, string>;
   timeline?: TimelineEntry[];
+  virtualTourVideos?: ProjectImage[];
 }
 
 export interface NavLink {

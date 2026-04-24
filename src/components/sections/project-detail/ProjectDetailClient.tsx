@@ -108,29 +108,57 @@ export default function ProjectDetailClient({ project, relatedProjects }: Projec
                 </div>
               )}
 
-              {/* 360 Tour Tab */}
-              {activeTab === "virtual-tour" && (
-                <div>
-                  {project.tourEmbedUrl ? (
-                    <div className="aspect-video w-full overflow-hidden rounded-xl bg-navy">
-                      <iframe
-                        src={project.tourEmbedUrl}
-                        className="h-full w-full"
-                        allow="xr-spatial-tracking; gyroscope; accelerometer"
-                        allowFullScreen
-                        loading="lazy"
-                        title={`Virtual Tour of ${project.title}`}
-                      />
-                    </div>
-                  ) : (
+              {/* Virtual Tour Tab */}
+              {activeTab === "virtual-tour" && (() => {
+                const tourVideos = project.virtualTourVideos ?? [];
+                const hasEmbed = Boolean(project.tourEmbedUrl);
+                const hasVideos = tourVideos.length > 0;
+                if (!hasEmbed && !hasVideos) {
+                  return (
                     <div className="flex flex-col items-center justify-center rounded-xl bg-cream border-2 border-dashed border-gray-200 py-20">
                       <View className="h-16 w-16 text-muted/30 mb-4" />
                       <h3 className="text-lg font-bold text-navy" style={{ fontFamily: "var(--font-heading)" }}>Virtual Tour Coming Soon</h3>
                       <p className="mt-2 text-sm text-muted">The virtual tour for this project is being prepared.</p>
                     </div>
-                  )}
-                </div>
-              )}
+                  );
+                }
+                return (
+                  <div className="space-y-6">
+                    {hasEmbed && (
+                      <div className="aspect-video w-full overflow-hidden rounded-xl bg-navy">
+                        <iframe
+                          src={project.tourEmbedUrl ?? undefined}
+                          className="h-full w-full"
+                          allow="xr-spatial-tracking; gyroscope; accelerometer"
+                          allowFullScreen
+                          loading="lazy"
+                          title={`Virtual Tour of ${project.title}`}
+                        />
+                      </div>
+                    )}
+                    {hasVideos && (
+                      <div>
+                        {hasEmbed && (
+                          <h3 className="mb-3 text-lg font-bold text-navy" style={{ fontFamily: "var(--font-heading)" }}>Walkthrough Videos</h3>
+                        )}
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {tourVideos.map((vid, i) => (
+                            <div key={i} className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+                              <video
+                                src={vid.src}
+                                className="h-full w-full"
+                                controls
+                                preload="metadata"
+                                playsInline
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Floor Plans Tab */}
               {activeTab === "floor-plans" && (
