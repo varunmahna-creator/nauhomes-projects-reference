@@ -303,6 +303,67 @@ export default function AdminDashboard() {
     });
   }
 
+
+  async function handleTimelineVideoUpload(e: React.ChangeEvent<HTMLInputElement>, entryIndex: number) {
+    const files = e.target.files;
+    if (!files?.length) return;
+    const slug = editingProject?.slug || projectForm.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new-project";
+    
+    setUploading(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        // Check file size - use large upload endpoint for videos
+        const maxSizeBytes = 50 * 1024 * 1024; // 50MB limit for videos
+        if (file.size > maxSizeBytes) {
+          throw new Error(`Video "${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 50MB.`);
+        }
+        
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("slug", slug);
+        fd.append("category", "timeline");
+        
+        // Use large upload endpoint for videos to bypass 4MB serverless limit
+        const uploadEndpoint = "/api/upload-large";
+        const res = await fetch(uploadEndpoint, { method: "POST", body: fd });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: `Upload failed (${res.status})` }));
+          throw new Error(errorData.error || 'Upload failed');
+        }
+        
+        const { path: p } = await res.json();
+        
+        setProjectForm(prev => {
+          const timeline = [...(prev.timeline || [])];
+          timeline[entryIndex] = {
+            ...timeline[entryIndex],
+            videos: [...(timeline[entryIndex].videos || []), { src: p, alt: file.name.replace(/\.[^.]+$/, "") }],
+          };
+          return { ...prev, timeline };
+        });
+      }
+      showMsg("success", "Timeline videos uploaded");
+    } catch (error) { 
+      showMsg("error", `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`); 
+    } finally { 
+      setUploading(false); 
+      e.target.value = ""; 
+    }
+  }
+
+  function removeTimelineVideo(entryIndex: number, videoIndex: number) {
+    setProjectForm(prev => {
+      const timeline = [...(prev.timeline || [])];
+      timeline[entryIndex] = {
+        ...timeline[entryIndex],
+        videos: (timeline[entryIndex].videos || []).filter((_, i) => i !== videoIndex),
+      };
+      return { ...prev, timeline };
+    });
+  }
+
   // =============== TESTIMONIAL CRUD ===============
   function startCreateTestimonial() {
     setTestimonialForm({ name: "", location: "", quote: "", rating: 5, profession: "", image: "", videoUrl: "" });
@@ -544,7 +605,58 @@ export default function AdminDashboard() {
 
   // =============== PROJECTS LIST ===============
   if (section === "projects" && projectViewMode === "list") {
-    return (
+  
+  async function handleVirtualTourVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files?.length) return;
+    const slug = editingProject?.slug || projectForm.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "new-project";
+    
+    setUploading(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        const maxSizeBytes = 50 * 1024 * 1024; // 50MB limit for videos
+        if (file.size > maxSizeBytes) {
+          throw new Error(`Video "${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 50MB.`);
+        }
+        
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("slug", slug);
+        fd.append("category", "virtual-tour");
+        
+        const uploadEndpoint = "/api/upload-large";
+        const res = await fetch(uploadEndpoint, { method: "POST", body: fd });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: `Upload failed (${res.status})` }));
+          throw new Error(errorData.error || 'Upload failed');
+        }
+        
+        const { path: p } = await res.json();
+        
+        setProjectForm(prev => ({
+          ...prev,
+          virtualTourVideos: [...(prev.virtualTourVideos || []), { src: p, alt: file.name.replace(/\.[^.]+$/, "") }],
+        }));
+      }
+      showMsg("success", "Virtual tour videos uploaded");
+    } catch (error) { 
+      showMsg("error", `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`); 
+    } finally { 
+      setUploading(false); 
+      e.target.value = ""; 
+    }
+  }
+
+  function removeVirtualTourVideo(videoIndex: number) {
+    setProjectForm(prev => ({
+      ...prev,
+      virtualTourVideos: (prev.virtualTourVideos || []).filter((_, i) => i !== videoIndex),
+    }));
+  }
+
+  return (
       <div className="min-h-screen bg-cream pt-24">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-4">
@@ -763,6 +875,49 @@ export default function AdminDashboard() {
                             <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={e => handleTimelineImageUpload(e, idx)} />
                           </label>
                         </div>
+
+                      {/* Timeline videos */}
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className={labelClass}>Progress Videos ({(entry.videos || []).length})</label>
+                          <label className="flex items-center gap-1 rounded bg-gold/10 px-2 py-1 text-[10px] font-semibold text-gold-dark cursor-pointer">
+                            <Upload className="h-3 w-3" /> Upload Video
+                            <input type="file" accept="video/*" multiple className="hidden" onChange={e => handleTimelineVideoUpload(e, idx)} />
+                          </label>
+                        </div>
+                        <div className="mb-2">
+                          <p className="text-xs text-muted">💡 Videos up to 50MB supported. Larger uploads may take a few moments.</p>
+                        </div>
+                        {(entry.videos || []).length > 0 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {(entry.videos || []).map((vid, vidIdx) => (
+                              <div key={vidIdx} className="group relative aspect-video rounded overflow-hidden bg-gray-100 border border-gray-200">
+                                <video 
+                                  src={vid.src} 
+                                  className="h-full w-full object-cover" 
+                                  controls={false} 
+                                  muted 
+                                  poster=""
+                                  preload="metadata"
+                                >
+                                  Your browser does not support the video tag.
+                                </video>
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                                  <div className="bg-white/90 rounded-full p-2">
+                                    <svg className="h-4 w-4 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                </div>
+                                <div className="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-xs text-white">
+                                  {vid.alt}
+                                </div>
+                                <button onClick={() => removeTimelineVideo(idx, vidIdx)} className="absolute top-1 right-1 hidden group-hover:flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white cursor-pointer hover:bg-red-600"><X className="h-3 w-3" /></button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                         {entry.images.length > 0 && (
                           <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
                             {entry.images.map((img, imgIdx) => (

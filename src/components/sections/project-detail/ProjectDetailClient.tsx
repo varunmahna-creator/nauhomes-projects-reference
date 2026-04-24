@@ -19,7 +19,7 @@ interface ProjectDetailClientProps {
 
 const PROJECT_TABS = [
   { id: "gallery", label: "Gallery", icon: <ImageIcon className="h-4 w-4" /> },
-  { id: "360-tour", label: "360° Tour", icon: <View className="h-4 w-4" /> },
+  { id: "virtual-tour", label: "Virtual Tour", icon: <View className="h-4 w-4" /> },
   { id: "floor-plans", label: "Floor Plans", icon: <Layout className="h-4 w-4" /> },
   { id: "timeline", label: "Timeline", icon: <Clock className="h-4 w-4" /> },
   { id: "details", label: "Details", icon: <Info className="h-4 w-4" /> },
@@ -109,7 +109,7 @@ export default function ProjectDetailClient({ project, relatedProjects }: Projec
               )}
 
               {/* 360 Tour Tab */}
-              {activeTab === "360-tour" && (
+              {activeTab === "virtual-tour" && (
                 <div>
                   {project.tourEmbedUrl ? (
                     <div className="aspect-video w-full overflow-hidden rounded-xl bg-navy">
@@ -119,13 +119,13 @@ export default function ProjectDetailClient({ project, relatedProjects }: Projec
                         allow="xr-spatial-tracking; gyroscope; accelerometer"
                         allowFullScreen
                         loading="lazy"
-                        title={`360° Tour of ${project.title}`}
+                        title={`Virtual Tour of ${project.title}`}
                       />
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center rounded-xl bg-cream border-2 border-dashed border-gray-200 py-20">
                       <View className="h-16 w-16 text-muted/30 mb-4" />
-                      <h3 className="text-lg font-bold text-navy" style={{ fontFamily: "var(--font-heading)" }}>360° Tour Coming Soon</h3>
+                      <h3 className="text-lg font-bold text-navy" style={{ fontFamily: "var(--font-heading)" }}>Virtual Tour Coming Soon</h3>
                       <p className="mt-2 text-sm text-muted">The virtual tour for this project is being prepared.</p>
                     </div>
                   )}
