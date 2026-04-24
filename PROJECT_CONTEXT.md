@@ -118,23 +118,28 @@ git push origin main
 
 No manual Vercel deploys needed. Ever.
 
-## Current state (2026-04-23)
+## Current state (2026-04-24)
 
 - ✅ Admin panel creates/edits/deletes projects — persists to Postgres
 - ✅ Image + PDF upload via Vercel Blob — real URLs, public access
 - ✅ Public site reads projects from DB
 - ✅ Specs textarea editable (was broken, fixed)
 - ✅ Admin password protection via middleware (cookie-based, 30-day sessions)
+- ✅ Timeline progress photos upload + display on project page
+- ✅ **Timeline progress videos** upload via client-side direct-to-Blob (up to 500MB), display on project page
+- ✅ **Virtual tour videos** upload + display in the Virtual Tour tab (alongside any Matterport/etc. iframe embed)
+- ✅ Large-file upload properly solved: `/api/blob-upload` hands out signed tokens, browser POSTs files straight to Vercel Blob, bypassing the ~4.5MB serverless function body cap
 - 🔄 Needs real content — only placeholder/test data so far
 - 🔄 nauhomes.com DNS not connected to Vercel yet
 - 🔄 Google Analytics / error monitoring not set up
 - 🔄 Other admin sections (testimonials, media, leads, settings) still use in-memory storage — **will break in production the same way projects did**. Not yet refactored to use Postgres.
+- 🔄 Image uploads (gallery, thumbnail, floor plans) still go through the old `/api/upload` formData route — fine for anything under ~4MB. If a user tries to upload a huge image, migrate those handlers to `uploadVideoToBlob` (generalise it to `uploadToBlob`).
 
 ---
 
 ## TODO (priority order)
 
-### P0 - Migrate remaining admin sections to Postgres
+### P0 - Migrate remaining admin sections to Postgres (in-memory storage)
 - `src/lib/testimonials.ts` — in-memory, fix like we did for projects
 - `src/lib/media.ts` — in-memory
 - `src/lib/leads.ts` — in-memory (CRITICAL: contact form submissions currently lost on cold start!)
@@ -271,6 +276,9 @@ src/
 ## Recent commits on `main`
 
 ```
+7a9a0a1 feat(projects): virtual tour videos (persistence + frontend display)
+0e27ecd feat(upload): client-side direct Blob uploads for videos (up to 500MB)
+257f35e fix: Add timeline video display on frontend + improve large video upload handling
 9327d8c feat: add admin password protection via middleware
 5a06d90 docs: comprehensive project context + post-mortem
 426dc6a Fix Specs textarea unresponsive in admin: use raw string state
@@ -278,3 +286,52 @@ a325cc4 Fix broken admin panel: real Vercel Postgres + Blob storage
 ```
 
 All fakes above a325cc4 are now deleted/replaced. Historical commits (below a325cc4) reflect the broken state — don't revert past a325cc4.
+
+---
+
+## 📹 Large-file upload architecture (added 2026-04-24)
+
+**Problem earlier today:** Iraaj shipped `/api/upload-large` thinking it would handle 50MB videos. It didn't — it still pipes the file through a serverless function (`request.formData()` → `put()`), and Vercel's serverless functions cap request bodies at ~4.5MB. Anything bigger = 413 / timeout.
+
+**Fix:** Use Vercel Blob's **client-side direct upload** flow. The browser uploads directly to Blob storage; our function only issues a short-lived signed token.
+
+**How it works:**
+
+```
+[Browser]                                           [Our API]              [Vercel Blob]
+   │ upload(pathname, file, {handleUploadUrl})
+   ├──> POST /api/blob-upload ({type:"generate-client-token"}) ───>
+   │                                                                  |
+   │                                                    auth + path regex + returns signed token
+   │ <───────────────────── {clientToken}  ────────────────────────┤
+   │                                                                  |
+   │ PUT the actual file bytes ─────────────────────────────────>  (multipart, chunked, parallel)
+   │ <───────────────────────────────────────────────────────────┤
+   │                                                                                   |
+   │ <─── POST /api/blob-upload ({type:"upload-completed"}) ──────────────────┤ (server-to-server callback)
+```
+
+**Files:**
+- `src/app/api/blob-upload/route.ts` — handoff endpoint (`handleUpload`). Checks `nau_admin` cookie; validates pathname against `PATH_RE` whitelist.
+- `AdminDashboard.tsx → uploadVideoToBlob()` — shared helper used by both timeline + virtual-tour uploaders.
+- Uses `multipart: true` so large videos are split into parallel chunks with per-chunk retry — essential for 100MB+ on mobile networks.
+
+**Why NOT in middleware matcher:** The same endpoint receives a server-to-server callback from Vercel Blob after upload completes. That callback does NOT carry our admin cookie (it's signed by Blob itself). If we gated the URL at middleware level with cookie auth, the completion callback would 401. So we skip middleware and do cookie auth INLINE in `onBeforeGenerateToken` (which only runs on the client handoff, not the Blob callback).
+
+**Adding more file kinds in the future:** Extend `PATH_RE` to whitelist additional subfolders beyond `thumbnail|gallery|floor-plans|timeline|virtual-tour`.
+
+**Image uploads still go through `/api/upload`** (old formData route) because they're small. If you ever need a 20MB image upload, generalise `uploadVideoToBlob` to `uploadToBlob(file, slug, kind)` and call it from `handleProjectImageUpload`.
+
+---
+
+## 🗃️ Database migrations
+
+`src/lib/projects-db.ts → ensureSchema()` is idempotent and runs once per serverless instance. New columns go in as:
+
+```sql
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS new_column_name JSONB DEFAULT '[]'::jsonb;
+```
+
+This is how `virtual_tour_videos` was added on 2026-04-24 without a manual migration step — the first serverless cold start after deploy runs the ALTER.
+
+Don't `DROP COLUMN` blindly. If you need to rename or remove a column, do it in Neon's SQL console with a backup first.
