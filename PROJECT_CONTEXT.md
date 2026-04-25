@@ -1,7 +1,7 @@
 # Nirvana Homes (nauhomes) - Project Context
 
-**Last updated:** 2026-04-23 by Dhurandhar (with Varun) — admin auth added
-**Status:** Working — admin panel + public site fully functional
+**Last updated:** 2026-04-25 by Dhurandhar (with Varun) — video upload (timeline + virtual tour) confirmed working in production
+**Status:** Working — admin panel + public site + video uploads fully functional
 
 ---
 
@@ -118,7 +118,7 @@ git push origin main
 
 No manual Vercel deploys needed. Ever.
 
-## Current state (2026-04-24)
+## Current state (2026-04-25)
 
 - ✅ Admin panel creates/edits/deletes projects — persists to Postgres
 - ✅ Image + PDF upload via Vercel Blob — real URLs, public access
@@ -126,9 +126,9 @@ No manual Vercel deploys needed. Ever.
 - ✅ Specs textarea editable (was broken, fixed)
 - ✅ Admin password protection via middleware (cookie-based, 30-day sessions)
 - ✅ Timeline progress photos upload + display on project page
-- ✅ **Timeline progress videos** upload via client-side direct-to-Blob (up to 500MB), display on project page
-- ✅ **Virtual tour videos** upload + display in the Virtual Tour tab (alongside any Matterport/etc. iframe embed)
-- ✅ Large-file upload properly solved: `/api/blob-upload` hands out signed tokens, browser POSTs files straight to Vercel Blob, bypassing the ~4.5MB serverless function body cap
+- ✅ **Timeline progress videos** — client-side direct-to-Blob upload (up to 500MB), playback on project page. **Tested by Varun in production, working perfectly.**
+- ✅ **Virtual tour videos** — upload + playback in the Virtual Tour tab alongside any Matterport/etc. iframe embed. **Tested by Varun in production, working perfectly.**
+- ✅ Large-file upload architecture solved: `/api/blob-upload` hands out signed tokens, browser POSTs files straight to Vercel Blob, bypassing the ~4.5MB serverless function body cap. Confirmed working with multi-hundred-MB videos on real uploads.
 - 🔄 Needs real content — only placeholder/test data so far
 - 🔄 nauhomes.com DNS not connected to Vercel yet
 - 🔄 Google Analytics / error monitoring not set up
@@ -289,7 +289,9 @@ All fakes above a325cc4 are now deleted/replaced. Historical commits (below a325
 
 ---
 
-## 📹 Large-file upload architecture (added 2026-04-24)
+## 📹 Large-file upload architecture (added 2026-04-24, confirmed working 2026-04-25)
+
+**Production status (2026-04-25):** Varun has uploaded real timeline videos and virtual-tour videos through the admin panel. End-to-end flow verified: signed-token issue → direct multipart upload to Blob → server-to-server completion callback → DB persistence → playback on the public project page. No 413s, no timeouts, no auth glitches.
 
 **Problem earlier today:** Iraaj shipped `/api/upload-large` thinking it would handle 50MB videos. It didn't — it still pipes the file through a serverless function (`request.formData()` → `put()`), and Vercel's serverless functions cap request bodies at ~4.5MB. Anything bigger = 413 / timeout.
 
