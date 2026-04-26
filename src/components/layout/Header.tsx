@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_LINKS, CONTACT_INFO } from "@/lib/constants";
+import { NAV_LINKS } from "@/lib/constants";
+import { useContactInfo } from "@/lib/useContactInfo";
 
 export default function Header() {
+  const CONTACT_INFO = useContactInfo();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();

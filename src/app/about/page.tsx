@@ -3,7 +3,8 @@ import { Award, Users, Globe, Shield } from "lucide-react";
 import SectionWrapper from "@/components/ui/SectionWrapper";
 import AnimateOnScroll from "@/components/ui/AnimateOnScroll";
 import Counter from "@/components/ui/Counter";
-import { STATS, CONTACT_INFO } from "@/lib/constants";
+import { STATS } from "@/lib/constants";
+import { getContactInfo } from "@/lib/settings";
 import { getMedia } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ const VALUES = [
 ];
 
 export default function AboutPage() {
+  const CONTACT_INFO = getContactInfo();
   return (
     <>
       {/* Hero */}

@@ -127,6 +127,7 @@ export interface SiteSettings {
   socialLinks: SocialLinks;
   sectionVisibility: SectionVisibility;
   homepageImages: HomepageImages;
+  contactInfo?: ContactInfo;
 }
 
 export interface SectionVisibility {

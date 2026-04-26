@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
-  Plus, Pencil, Trash2, Upload, X, Save, ArrowLeft,
+  Plus, Pencil, Trash2, Upload, X, Save, ArrowLeft, Phone,
   Image as ImageIcon, MapPin, Loader2, Eye, Star,
   ChevronUp, ChevronDown, Clock, Video, Globe, Settings,
   ExternalLink, Newspaper
@@ -28,6 +28,16 @@ const DEFAULT_HOMEPAGE_IMAGES: HomepageImages = {
   ctaBackground: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c0?w=1920&q=80",
 };
 
+const DEFAULT_CONTACT_INFO = {
+  phone: "+91-9876543210",
+  email: "info@nauhomes.com",
+  whatsapp: "919876543210",
+  offices: [
+    { city: "New Delhi", address: "Plot No. 20, Okhla Phase 3, New Delhi 110020, India", mapUrl: "https://maps.google.com/?q=Okhla+Phase+3+New+Delhi" },
+    { city: "Bali", address: "Floor 3, Block A6, Jl. Teuku Umar No.8, Denpasar, Bali 80113, Indonesia", mapUrl: "https://maps.google.com/?q=Denpasar+Bali" },
+  ],
+};
+
 const DEFAULT_SETTINGS: SiteSettings = {
   socialLinks: { facebook: "", instagram: "", youtube: "", twitter: "", linkedin: "" },
   sectionVisibility: {
@@ -35,6 +45,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
     whyUs: true, testimonials: true, blog: true, faq: true, cta: true, mediaCoverage: true,
   },
   homepageImages: DEFAULT_HOMEPAGE_IMAGES,
+  contactInfo: DEFAULT_CONTACT_INFO,
 };
 
 export default function AdminDashboard() {
@@ -119,6 +130,15 @@ export default function AdminDashboard() {
           socialLinks: { ...DEFAULT_SETTINGS.socialLinks, ...data.socialLinks },
           sectionVisibility: { ...DEFAULT_SETTINGS.sectionVisibility, ...data.sectionVisibility },
           homepageImages: { ...DEFAULT_HOMEPAGE_IMAGES, ...data.homepageImages },
+          contactInfo: data.contactInfo
+            ? {
+                ...DEFAULT_CONTACT_INFO,
+                ...data.contactInfo,
+                offices: (data.contactInfo.offices && data.contactInfo.offices.length > 0)
+                  ? data.contactInfo.offices
+                  : DEFAULT_CONTACT_INFO.offices,
+              }
+            : DEFAULT_CONTACT_INFO,
         });
       }
     } catch { showMsg("error", "Failed to load settings"); }
@@ -625,6 +645,46 @@ export default function AdminDashboard() {
       ...prev,
       socialLinks: { ...prev.socialLinks, [key]: value },
     }));
+  }
+
+  function updateContactField(key: "phone" | "email" | "whatsapp", value: string) {
+    setSiteSettings(prev => ({
+      ...prev,
+      contactInfo: {
+        ...(prev.contactInfo || DEFAULT_CONTACT_INFO),
+        [key]: value,
+      },
+    }));
+  }
+
+  function updateOffice(index: number, key: "city" | "address" | "mapUrl", value: string) {
+    setSiteSettings(prev => {
+      const ci = prev.contactInfo || DEFAULT_CONTACT_INFO;
+      const offices = [...(ci.offices || [])];
+      offices[index] = { ...offices[index], [key]: value };
+      return { ...prev, contactInfo: { ...ci, offices } };
+    });
+  }
+
+  function addOffice() {
+    setSiteSettings(prev => {
+      const ci = prev.contactInfo || DEFAULT_CONTACT_INFO;
+      return {
+        ...prev,
+        contactInfo: {
+          ...ci,
+          offices: [...(ci.offices || []), { city: "", address: "", mapUrl: "" }],
+        },
+      };
+    });
+  }
+
+  function removeOffice(index: number) {
+    setSiteSettings(prev => {
+      const ci = prev.contactInfo || DEFAULT_CONTACT_INFO;
+      const offices = (ci.offices || []).filter((_, i) => i !== index);
+      return { ...prev, contactInfo: { ...ci, offices } };
+    });
   }
 
   function toggleSectionVisibility(key: keyof SectionVisibility) {
@@ -1440,6 +1500,109 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="rounded-xl bg-white p-6 border border-gray-200">
+                <h2 className="text-lg font-bold text-navy mb-4" style={{ fontFamily: "var(--font-heading)" }}>
+                  <Phone className="inline h-5 w-5 mr-2 text-gold" />Contact Information
+                </h2>
+                <p className="text-sm text-muted mb-4">Edit the phone, email, WhatsApp number and office addresses shown across the site (footer, contact page, header, etc.).</p>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className={labelClass}>Phone</label>
+                    <input
+                      className={inputClass}
+                      placeholder="+91-9876543210"
+                      value={siteSettings.contactInfo?.phone || ""}
+                      onChange={e => updateContactField("phone", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Email</label>
+                    <input
+                      className={inputClass}
+                      placeholder="info@nauhomes.com"
+                      value={siteSettings.contactInfo?.email || ""}
+                      onChange={e => updateContactField("email", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>WhatsApp (digits only, with country code)</label>
+                    <input
+                      className={inputClass}
+                      placeholder="919876543210"
+                      value={siteSettings.contactInfo?.whatsapp || ""}
+                      onChange={e => updateContactField("whatsapp", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-navy">Offices ({(siteSettings.contactInfo?.offices || []).length})</h3>
+                    <button
+                      type="button"
+                      onClick={addOffice}
+                      className="flex items-center gap-1 rounded bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold-dark hover:bg-gold/20 cursor-pointer"
+                    >
+                      <Plus className="h-3 w-3" /> Add Office
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {(siteSettings.contactInfo?.offices || []).map((office, idx) => (
+                      <div key={idx} className="rounded-lg border border-gray-200 bg-cream/30 p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold text-navy text-xs font-bold">{idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeOffice(idx)}
+                            className="rounded p-1 text-muted hover:text-red-500 cursor-pointer"
+                            aria-label="Remove office"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className={labelClass}>City</label>
+                            <input
+                              className={inputClass}
+                              placeholder="New Delhi"
+                              value={office.city}
+                              onChange={e => updateOffice(idx, "city", e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Google Maps URL</label>
+                            <input
+                              className={inputClass}
+                              placeholder="https://maps.google.com/?q=..."
+                              value={office.mapUrl}
+                              onChange={e => updateOffice(idx, "mapUrl", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <label className={labelClass}>Address</label>
+                          <textarea
+                            className={cn(inputClass, "resize-none")}
+                            rows={2}
+                            placeholder="Full address..."
+                            value={office.address}
+                            onChange={e => updateOffice(idx, "address", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {(siteSettings.contactInfo?.offices || []).length === 0 && (
+                      <div className="rounded-lg border-2 border-dashed border-gray-200 bg-cream/40 py-6 text-center text-sm text-muted">
+                        No offices added yet. Click &quot;Add Office&quot; to add one.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

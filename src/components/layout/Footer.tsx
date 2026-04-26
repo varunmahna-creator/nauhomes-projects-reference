@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
-import { NAV_LINKS, CONTACT_INFO } from "@/lib/constants";
+import { NAV_LINKS } from "@/lib/constants";
+import { getContactInfo } from "@/lib/settings";
 
 const SERVICES_LIST = [
   "Planning & Design",
@@ -19,6 +20,7 @@ function SocialIcon({ name }: { name: string }) {
 }
 
 export default function Footer({ socialLinks }: { socialLinks?: { facebook: string; instagram: string; youtube: string; twitter: string; linkedin: string } }) {
+  const CONTACT_INFO = getContactInfo();
   return (
     <footer className="bg-navy-dark text-white/80">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

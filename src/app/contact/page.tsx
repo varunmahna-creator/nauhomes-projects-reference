@@ -3,7 +3,7 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import SectionWrapper from "@/components/ui/SectionWrapper";
 import AnimateOnScroll from "@/components/ui/AnimateOnScroll";
 import ContactForm from "@/components/ui/ContactForm";
-import { CONTACT_INFO } from "@/lib/constants";
+import { getContactInfo } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
+  const CONTACT_INFO = getContactInfo();
   return (
     <>
       {/* Hero */}
