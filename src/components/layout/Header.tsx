@@ -7,9 +7,10 @@ import { Menu, X, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "@/lib/constants";
 import { useContactInfo } from "@/lib/useContactInfo";
+import type { ContactInfo } from "@/types";
 
-export default function Header() {
-  const CONTACT_INFO = useContactInfo();
+export default function Header({ initialContact }: { initialContact?: ContactInfo }) {
+  const CONTACT_INFO = useContactInfo(initialContact);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();

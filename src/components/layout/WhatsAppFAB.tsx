@@ -3,9 +3,10 @@
 import React from "react";
 import { MessageCircle } from "lucide-react";
 import { useContactInfo } from "@/lib/useContactInfo";
+import type { ContactInfo } from "@/types";
 
-export default function WhatsAppFAB() {
-  const CONTACT_INFO = useContactInfo();
+export default function WhatsAppFAB({ initialContact }: { initialContact?: ContactInfo }) {
+  const CONTACT_INFO = useContactInfo(initialContact);
   const whatsappUrl = `https://wa.me/${CONTACT_INFO.whatsapp}?text=${encodeURIComponent("Hi, I'm interested in Nirvana Group projects. Could you share more details?")}`;
 
   return (

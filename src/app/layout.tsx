@@ -303,13 +303,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="antialiased">
-        <Header />
+        <Header initialContact={contact} />
         <main className="min-h-screen" role="main">
           {children}
         </main>
         <Footer socialLinks={settings.socialLinks} />
-        <WhatsAppFAB />
-        <MobileCTABar />
+        <WhatsAppFAB initialContact={contact} />
+        <MobileCTABar initialContact={contact} />
         
         {/* Analytics — only emit when a real GA4 measurement ID is configured.
             Set NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX in Vercel to enable. */}
