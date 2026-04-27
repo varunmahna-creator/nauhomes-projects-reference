@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppFAB from "@/components/layout/WhatsAppFAB";
 import MobileCTABar from "@/components/layout/MobileCTABar";
-import { getSettings } from "@/lib/settings";
+import { getSettings, getContactInfo } from "@/lib/settings";
 import Script from "next/script";
 import "./globals.css";
 
@@ -216,8 +216,54 @@ const realEstateAgentSchema = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSettings();
-  
+  const [settings, contact] = await Promise.all([getSettings(), getContactInfo()]);
+
+  // Inject live phone/email/addresses from /admin into the JSON-LD so SEO
+  // reflects whatever Varun has configured (instead of the static placeholder).
+  const liveOrganizationSchema = {
+    ...organizationSchema,
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer service",
+        telephone: contact.phone,
+        email: contact.email,
+        areaServed: "IN",
+        availableLanguage: ["English", "Hindi"],
+      },
+    ],
+    address: contact.offices.map((o) => ({
+      "@type": "PostalAddress",
+      streetAddress: o.address,
+      addressLocality: o.city,
+      addressCountry: /bali|indonesia/i.test(o.city) ? "ID" : "IN",
+    })),
+    email: contact.email,
+    telephone: contact.phone,
+  };
+
+  const delhiOffice = contact.offices.find((o) => /delhi|ncr/i.test(o.city)) ?? contact.offices[0];
+  const liveLocalBusinessSchemaDelhi = {
+    ...localBusinessSchemaDelhi,
+    telephone: contact.phone,
+    email: contact.email,
+    address: delhiOffice
+      ? {
+          "@type": "PostalAddress",
+          streetAddress: delhiOffice.address,
+          addressLocality: "New Delhi",
+          addressRegion: "Delhi",
+          addressCountry: "IN",
+        }
+      : localBusinessSchemaDelhi.address,
+  };
+
+  const liveRealEstateAgentSchema = {
+    ...realEstateAgentSchema,
+    telephone: contact.phone,
+    email: contact.email,
+  };
+
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <head>
@@ -234,13 +280,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema),
+            __html: JSON.stringify(liveOrganizationSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(localBusinessSchemaDelhi),
+            __html: JSON.stringify(liveLocalBusinessSchemaDelhi),
           }}
         />
         <script
@@ -252,7 +298,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(realEstateAgentSchema),
+            __html: JSON.stringify(liveRealEstateAgentSchema),
           }}
         />
       </head>
