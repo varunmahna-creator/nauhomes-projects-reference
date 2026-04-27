@@ -68,7 +68,7 @@ export default async function Page() {
   const projects = await getProjects();
   const testimonials = getTestimonials();
   const media = getMedia();
-  const settings = getSettings();
+  const settings = await getSettings();
 
   return (
     <HomePageClient 

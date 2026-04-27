@@ -19,8 +19,8 @@ function SocialIcon({ name }: { name: string }) {
   );
 }
 
-export default function Footer({ socialLinks }: { socialLinks?: { facebook: string; instagram: string; youtube: string; twitter: string; linkedin: string } }) {
-  const CONTACT_INFO = getContactInfo();
+export default async function Footer({ socialLinks }: { socialLinks?: { facebook: string; instagram: string; youtube: string; twitter: string; linkedin: string } }) {
+  const CONTACT_INFO = await getContactInfo();
   return (
     <footer className="bg-navy-dark text-white/80">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

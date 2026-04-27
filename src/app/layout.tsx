@@ -215,8 +215,8 @@ const realEstateAgentSchema = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const settings = getSettings();
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getSettings();
   
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>

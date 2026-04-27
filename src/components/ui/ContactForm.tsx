@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, type FormEvent } from "react";
+import React, { useState, useMemo, type FormEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Send, CheckCircle, Loader2 } from "lucide-react";
 
@@ -20,7 +20,34 @@ interface FormData {
 }
 
 const LOCATIONS = ["Delhi NCR", "Bali, Indonesia"];
-const INTERESTS = ["New Construction", "Redevelopment", "Turnkey Project", "Rental Management", "Other"];
+
+// Service options change based on the selected market.
+const INTERESTS_BY_LOCATION: Record<string, string[]> = {
+  "Delhi NCR": [
+    "New Construction",
+    "Redevelopment",
+    "Turnkey Project",
+    "Collaboration / Joint Venture",
+    "Other",
+  ],
+  "Bali, Indonesia": [
+    "Villa Purchase",
+    "Turnkey Project",
+    "Rental Management",
+    "Other",
+  ],
+};
+
+// Fallback list before a location is picked.
+const INTERESTS_DEFAULT: string[] = [
+  "New Construction",
+  "Redevelopment",
+  "Turnkey Project",
+  "Villa Purchase",
+  "Rental Management",
+  "Collaboration / Joint Venture",
+  "Other",
+];
 
 export default function ContactForm({ variant = "light", compact = false, source }: ContactFormProps) {
   const [formData, setFormData] = useState<FormData>({
@@ -31,6 +58,11 @@ export default function ContactForm({ variant = "light", compact = false, source
   const [error, setError] = useState("");
 
   const isDark = variant === "dark";
+
+  const interestOptions = useMemo<string[]>(() => {
+    if (!formData.location) return INTERESTS_DEFAULT;
+    return INTERESTS_BY_LOCATION[formData.location] ?? INTERESTS_DEFAULT;
+  }, [formData.location]);
 
   const inputBaseStyles = cn(
     "w-full rounded-lg border px-4 py-3 text-sm transition-colors duration-200 focus:outline-none focus:ring-2",
@@ -43,7 +75,18 @@ export default function ContactForm({ variant = "light", compact = false, source
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      // If the user changes location and the previously selected interest is no
+      // longer valid for the new location, clear it so they're forced to re-pick.
+      if (name === "location") {
+        const valid = INTERESTS_BY_LOCATION[value] ?? INTERESTS_DEFAULT;
+        if (prev.interest && !valid.includes(prev.interest)) {
+          next.interest = "";
+        }
+      }
+      return next;
+    });
     if (error) setError("");
   }
 
@@ -60,14 +103,14 @@ export default function ContactForm({ variant = "light", compact = false, source
       });
       if (!response.ok) throw new Error("Failed to submit form. Please try again.");
 
-      // Also try external endpoint if configured
+      // Also try third-party endpoint if configured
       const endpoint = process.env.NEXT_PUBLIC_FORM_ENDPOINT;
       if (endpoint) {
         await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...formData, source }),
-        }).catch(() => {}); // Don't fail if external endpoint is down
+        }).catch(() => {}); // Don't fail if third-party endpoint is down
       }
 
       setIsSuccess(true);
@@ -123,9 +166,22 @@ export default function ContactForm({ variant = "light", compact = false, source
         <>
           <div>
             <label htmlFor="contact-interest" className={labelStyles}>Interested In</label>
-            <select id="contact-interest" name="interest" value={formData.interest} onChange={handleChange} className={cn(inputBaseStyles, !formData.interest && (isDark ? "text-white/50" : "text-muted"))}>
-              <option value="" disabled>Select service type</option>
-              {INTERESTS.map((int) => (<option key={int} value={int} className="text-navy">{int}</option>))}
+            <select
+              id="contact-interest"
+              name="interest"
+              value={formData.interest}
+              onChange={handleChange}
+              disabled={!formData.location}
+              className={cn(
+                inputBaseStyles,
+                !formData.interest && (isDark ? "text-white/50" : "text-muted"),
+                !formData.location && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              <option value="" disabled>
+                {formData.location ? "Select service type" : "Select location first"}
+              </option>
+              {interestOptions.map((int) => (<option key={int} value={int} className="text-navy">{int}</option>))}
             </select>
           </div>
           <div>

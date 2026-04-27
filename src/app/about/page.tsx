@@ -28,8 +28,8 @@ const VALUES = [
   { icon: <Globe className="h-7 w-7" />, title: "Innovation", description: "Blending traditional craftsmanship with modern technology and sustainable practices." },
 ];
 
-export default function AboutPage() {
-  const CONTACT_INFO = getContactInfo();
+export default async function AboutPage() {
+  const CONTACT_INFO = await getContactInfo();
   return (
     <>
       {/* Hero */}

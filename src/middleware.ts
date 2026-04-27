@@ -43,6 +43,15 @@ function isMutation(method: string): boolean {
   return method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
 }
 
+// Public mutation endpoints (form submissions from the public site).
+// These are POST-only and must remain reachable without admin auth.
+function isPublicMutation(pathname: string, method: string): boolean {
+  if (method !== "POST") return false;
+  // New lead from the public contact form.
+  if (pathname === "/api/leads" || pathname === "/api/leads/") return true;
+  return false;
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method.toUpperCase();
@@ -50,6 +59,11 @@ export async function middleware(req: NextRequest) {
   // API routes: only protect mutations. GET is public.
   const isApi = pathname.startsWith("/api/");
   if (isApi && !isMutation(method)) {
+    return NextResponse.next();
+  }
+
+  // Public mutation endpoints (e.g. contact-form lead submission) bypass auth.
+  if (isApi && isPublicMutation(pathname, method)) {
     return NextResponse.next();
   }
 

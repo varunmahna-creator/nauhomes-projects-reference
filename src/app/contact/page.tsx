@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import SectionWrapper from "@/components/ui/SectionWrapper";
@@ -17,8 +19,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContactPage() {
-  const CONTACT_INFO = getContactInfo();
+export default async function ContactPage() {
+  const CONTACT_INFO = await getContactInfo();
   return (
     <>
       {/* Hero */}
