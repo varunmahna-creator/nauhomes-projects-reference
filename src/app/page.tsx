@@ -28,24 +28,27 @@ export const metadata: Metadata = {
     description: "Premier luxury construction company specializing in premium residential projects across Delhi NCR and Bali. 20+ years of excellence in crafting luxury living spaces.",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-        width: 1920,
-        height: 1080,
-        alt: "Luxury residential construction"
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Nirvana Group - Luxury Construction in Delhi & Bali"
       }
     ],
-    url: "https://nauhomes.com",
+    url: "https://www.nauhomes.com",
     siteName: "Nirvana Group",
-    type: "website"
+    type: "website",
+    locale: "en_US"
   },
   twitter: {
     card: "summary_large_image",
-    title: "Luxury Construction in Delhi & Bali | Nirvana Group", 
+    title: "Luxury Construction in Delhi & Bali | Nirvana Group",
     description: "Premier luxury construction company specializing in premium residential projects across Delhi NCR and Bali.",
-    images: ["https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"]
+    images: ["/og-image.jpg"],
+    creator: "@nirvanahomes",
+    site: "@nirvanahomes"
   },
   alternates: {
-    canonical: "https://nauhomes.com"
+    canonical: "https://www.nauhomes.com"
   },
   robots: {
     index: true,
@@ -57,10 +60,8 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1
     }
-  },
-  verification: {
-    google: "your-google-verification-code"
   }
+  // Verification handled in root layout via env vars.
 };
 
 export default async function Page() {

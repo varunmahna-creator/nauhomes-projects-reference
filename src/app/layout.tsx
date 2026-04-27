@@ -25,7 +25,7 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // Note: maximumScale removed for a11y — users must be able to zoom.
   themeColor: '#0A1F44',
   colorScheme: 'light',
 }
@@ -92,9 +92,15 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.nauhomes.com",
   },
+  // Verification codes are set via env so we don't ship placeholders.
+  // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION / _BING_VERIFICATION in Vercel.
   verification: {
-    google: "your-google-verification-code",
-    // Add other verification codes as needed
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.NEXT_PUBLIC_BING_VERIFICATION
+      ? { other: { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_VERIFICATION } }
+      : {}),
   },
   category: "Real Estate & Construction",
   classification: "Business",
@@ -173,6 +179,42 @@ const localBusinessSchemaDelhi = {
   }
 };
 
+// WebSite schema enables Sitelinks search box in Google SERPs.
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Nirvana Group",
+  "alternateName": "Nirvana Homes",
+  "url": "https://www.nauhomes.com",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Nirvana Group",
+    "url": "https://www.nauhomes.com",
+  },
+  "inLanguage": "en",
+};
+
+// RealEstateAgent — more specific than LocalBusiness for property listings.
+const realEstateAgentSchema = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": "Nirvana Group",
+  "url": "https://www.nauhomes.com",
+  "logo": "https://www.nauhomes.com/logo.png",
+  "areaServed": [
+    { "@type": "AdministrativeArea", "name": "Delhi NCR" },
+    { "@type": "AdministrativeArea", "name": "Bali, Indonesia" },
+  ],
+  "knowsAbout": [
+    "Luxury Residential Construction",
+    "Builder Floors",
+    "Kothis",
+    "Redevelopment",
+    "Sustainable Villas",
+    "Turnkey Projects",
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = getSettings();
   
@@ -201,6 +243,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify(localBusinessSchemaDelhi),
           }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteSchema),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(realEstateAgentSchema),
+          }}
+        />
       </head>
       <body className="antialiased">
         <Header />
@@ -211,19 +265,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WhatsAppFAB />
         <MobileCTABar />
         
-        {/* Analytics Script - Replace with your actual tracking ID */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'GA_TRACKING_ID');
-          `}
-        </Script>
+        {/* Analytics — only emit when a real GA4 measurement ID is configured.
+            Set NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX in Vercel to enable. */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

@@ -10,6 +10,13 @@ import ContactForm from "@/components/ui/ContactForm";
 export const metadata: Metadata = {
   title: "Services",
   description: "Explore our comprehensive construction services - from planning and design to turnkey delivery, across Delhi and Bali.",
+  alternates: { canonical: "https://www.nauhomes.com/services" },
+  openGraph: {
+    title: "Construction Services | Nirvana Group",
+    description: "End-to-end luxury construction: planning & design, redevelopment, turnkey projects, project management, cost engineering, and more — across Delhi NCR and Bali.",
+    url: "https://www.nauhomes.com/services",
+    type: "website",
+  },
 };
 
 const DETAILED_SERVICES = [

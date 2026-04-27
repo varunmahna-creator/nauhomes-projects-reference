@@ -8,6 +8,13 @@ import { getContactInfo } from "@/lib/settings";
 export const metadata: Metadata = {
   title: "Contact Us",
   description: "Get in touch with Nirvana Group. Schedule a consultation for your luxury construction project in Delhi or Bali.",
+  alternates: { canonical: "https://www.nauhomes.com/contact" },
+  openGraph: {
+    title: "Contact Nirvana Group | Schedule a Consultation",
+    description: "Talk to our team about your luxury construction project in Delhi NCR or Bali. We respond within one business day.",
+    url: "https://www.nauhomes.com/contact",
+    type: "website",
+  },
 };
 
 export default function ContactPage() {

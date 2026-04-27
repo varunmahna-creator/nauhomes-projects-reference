@@ -9,9 +9,10 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/api/',
           '/admin/',
-          '/_next/',
           '/private/',
-          '/.well-known/',
+          // Note: /_next/ is fine for crawlers to fetch (it serves images, fonts,
+          // and CSS that Googlebot needs to render the page). We keep API and admin out.
+          // /.well-known/ deliberately allowed — used for verification, security.txt, etc.
         ],
       },
       {

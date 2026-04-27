@@ -9,6 +9,13 @@ import { BLOG_POSTS } from "@/lib/constants";
 export const metadata: Metadata = {
   title: "Blog",
   description: "Insights, guides, and news about luxury construction, real estate investment, and design trends.",
+  alternates: { canonical: "https://www.nauhomes.com/blog" },
+  openGraph: {
+    title: "Blog | Nirvana Group — Luxury Construction Insights",
+    description: "Expert guides on luxury construction, real-estate investment in Delhi NCR & Bali, and design trends.",
+    url: "https://www.nauhomes.com/blog",
+    type: "website",
+  },
 };
 
 export default function BlogPage() {

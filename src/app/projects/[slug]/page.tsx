@@ -17,14 +17,38 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
-  if (!project) return { title: "Project Not Found" };
+  if (!project) {
+    return {
+      title: "Project Not Found",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const url = `https://www.nauhomes.com/projects/${project.slug}`;
+  // Use a meaningful description fallback if the project record doesn't have one.
+  const description =
+    project.description?.trim() ||
+    `${project.title} — a luxury ${project.type || 'residential'} project by Nirvana Group${
+      project.locationLabel ? ` in ${project.locationLabel}` : ''
+    }.`;
+  const image = project.thumbnail || 'https://www.nauhomes.com/og-image.jpg';
 
   return {
     title: project.title,
-    description: project.description,
+    description,
+    alternates: { canonical: url },
     openGraph: {
       title: `${project.title} | Nirvana Group`,
-      description: project.description,
+      description,
+      url,
+      type: 'article',
+      images: [{ url: image, alt: project.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${project.title} | Nirvana Group`,
+      description,
+      images: [image],
     },
   };
 }

@@ -12,6 +12,13 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "About Us",
   description: "Learn about Nirvana Group - over 20 years of excellence in luxury construction across Delhi and Bali.",
+  alternates: { canonical: "https://www.nauhomes.com/about" },
+  openGraph: {
+    title: "About Nirvana Group | Luxury Construction in Delhi & Bali",
+    description: "Two decades of excellence — discover our story, values, and the team crafting luxury homes across Delhi NCR and Bali.",
+    url: "https://www.nauhomes.com/about",
+    type: "website",
+  },
 };
 
 const VALUES = [
